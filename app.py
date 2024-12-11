@@ -5,21 +5,22 @@ from dash.exceptions import PreventUpdate
 
 from functions import *
 
-database = 'GEC2017'
-graph_type = 'Graph'
+group_by = 'Teams'
+database_1 = 'GEC2017'
+database_2 = 'GEC2017'
+team_1 = 'All'
+meeting_1 = '1'
+team_2 = 'All'
+meeting_2 = '2'
+
 node_type = 'Behaviours'
 edge_type = 'Frequency'
-team = 'All'
-meeting = 'All'
 colour_type = 'Behaviours'
 colour_source = 'Source'
-team_compare = 'All'
-meeting_compare = 'All'
-node_signs = []
-edge_signs = {}
+show_edges = 'All'
+normalise = True
 
-
-teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_names, behaviours, node_stats, edge_stats = load_dataset(database, node_type, edge_type, team, meeting, colour_type, colour_source, graph_type)
+teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
 legend_nodes = get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
@@ -67,102 +68,6 @@ legend_stylesheet = [
 
 ]
 
-database_dropdown = html.Div([
-    html.P("Database: "),
-    dcc.Dropdown(
-        id='dropdown-update-database',
-        value='GEC2017',
-        clearable=False,
-        options=[
-        {'label': name, 'value': name}
-        for name in ['GEC2017', 'GEC2018', 'EYH2017', 'EYH2018', 'IDP2019', 'IDP2020']
-        ],
-        className='dash-bootstrap',
-        style={'width': '200px'},
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'},
-)
-
-database_dropdown_compare = html.Div([
-    html.P("Database: "),
-    dcc.Dropdown(
-        id='dropdown-update-database-compare',
-        value='GEC2017',
-        clearable=False,
-        options=[
-        {'label': name, 'value': name}
-        for name in ['GEC2017', 'GEC2018', 'EYH2017', 'EYH2018', 'IDP2019', 'IDP2020']
-        ],
-        className='dash-bootstrap',
-        style={'width': '200px'},
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'},
-)
-
-team_dropdown = html.Div([
-    html.P("Team:"),
-    dcc.Dropdown(
-        id = 'dropdown-update-team',
-        value='All',
-        clearable=False,
-        options=[
-            {'label': name, 'value': name}
-            for name in teams
-        ],
-        style={'width': '200px'},
-        className='dash-bootstrap'
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'}
-)
-
-team_dropdown_compare = html.Div([
-    html.P("Compare Team:"),
-    dcc.Dropdown(
-        id = 'dropdown-update-team-compare',
-        value='All',
-        clearable=False,
-        options=[
-            {'label': name, 'value': name}
-            for name in teams
-        ],
-        style={'width': '200px'},
-        className='dash-bootstrap'
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'}
-)
-
-meeting_dropdown = html.Div([
-    html.P("Meeting:"),
-    dcc.Dropdown(
-        id = 'dropdown-update-meeting',
-        value='All',
-        clearable=False,
-        options=[
-            {'label': name, 'value': name}
-            for name in meetings
-        ],
-        style={'width': '200px'},
-        className='dash-bootstrap'
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'}
-)
-
-meeting_dropdown_compare = html.Div([
-    html.P("Compare Meeting:"),
-    dcc.Dropdown(
-        id = 'dropdown-update-meeting-compare',
-        value='All',
-        clearable=False,
-        options=[
-            {'label': name, 'value': name}
-            for name in meetings
-        ],
-        style={'width': '200px'},
-        className='dash-bootstrap'
-    )],
-    style = {'display': 'inline-block', 'margin-left': '20px'}
-)
-
 layout_dropdown = html.Div([
     html.P("Layout:"),
     dcc.Dropdown(
@@ -178,9 +83,116 @@ layout_dropdown = html.Div([
     )
 ], style = {'display': 'inline-block', 'margin-left': '20px'})
 
-graph_type_radio = html.Div([html.P("Graph type:", style = {'display': 'inline-block'}),
-    html.Div(dcc.RadioItems(['Graph', 'Comparison'], id='radio-update-graph-type', value='Graph', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
-], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
+group_dropdown = html.Div([
+    html.P("Group by:"),
+    dcc.Dropdown(
+        id='dropdown-update-group',
+        value='Teams',
+        clearable=False,
+        options=[
+            {'label': name, 'value': name}
+            for name in ['Teams', 'teammark', 'airtime_evenness', 'psy_safe', 'expgroup']
+        ],
+        style={'width': '200px'},
+        className='dash-bootstrap'
+    )
+], style = {'display': 'inline-block', 'margin-left': '20px'})
+
+database_1_dropdown = html.Div([
+    html.P("Database 1: "),
+    dcc.Dropdown(
+        id='dropdown-update-database',
+        value='GEC2017',
+        clearable=False,
+        options=[
+        {'label': name, 'value': name}
+        for name in ['GEC2017', 'GEC2018', 'EYH2017', 'EYH2018', 'IDP2019', 'IDP2020']
+        ],
+        className='dash-bootstrap',
+        style={'width': '200px'},
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'},
+)
+
+team_1_dropdown = html.Div([
+    html.P("Team 1:"),
+    dcc.Dropdown(
+        id = 'dropdown-update-team',
+        value='All',
+        clearable=False,
+        options=[
+            {'label': name, 'value': name}
+            for name in teams_1
+        ],
+        style={'width': '200px'},
+        className='dash-bootstrap'
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'}
+)
+
+meeting_1_dropdown = html.Div([
+    html.P("Meeting 1:"),
+    dcc.Dropdown(
+        id = 'dropdown-update-meeting',
+        value='1',
+        clearable=False,
+        options=[
+            {'label': name, 'value': name}
+            for name in meetings_1
+        ],
+        style={'width': '200px'},
+        className='dash-bootstrap'
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'}
+)
+
+database_2_dropdown = html.Div([
+    html.P("Database 2: "),
+    dcc.Dropdown(
+        id='dropdown-update-database-compare',
+        value='GEC2017',
+        clearable=False,
+        options=[
+        {'label': name, 'value': name}
+        for name in ['GEC2017', 'GEC2018', 'EYH2017', 'EYH2018', 'IDP2019', 'IDP2020']
+        ],
+        className='dash-bootstrap',
+        style={'width': '200px'},
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'},
+)
+
+team_2_dropdown = html.Div([
+    html.P("Team 2:"),
+    dcc.Dropdown(
+        id = 'dropdown-update-team-compare',
+        value='All',
+        clearable=False,
+        options=[
+            {'label': name, 'value': name}
+            for name in teams_2
+        ],
+        style={'width': '200px'},
+        className='dash-bootstrap'
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'}
+)
+
+meeting_2_dropdown = html.Div([
+    html.P("Meeting 2:"),
+    dcc.Dropdown(
+        id = 'dropdown-update-meeting-compare',
+        value='2',
+        clearable=False,
+        options=[
+            {'label': name, 'value': name}
+            for name in meetings_2
+        ],
+        style={'width': '200px'},
+        className='dash-bootstrap'
+    )],
+    style = {'display': 'inline-block', 'margin-left': '20px'}
+)
 
 node_type_radio = html.Div([html.P("Node type:", style = {'display': 'inline-block'}),
     html.Div(dcc.RadioItems(['Behaviours', 'Participants'], id='radio-update-nodes', value='Behaviours', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
@@ -198,11 +210,18 @@ colour_source_radio = html.Div([html.P("Colour by:", style = {'display': 'inline
     html.Div(dcc.RadioItems(['Source', 'Target'], id='radio-update-colour-source', value='Source', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
 ], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
 
+show_edge_options_radio = html.Div([html.P("Show edges:", style = {'display': 'inline-block'}),
+    html.Div(dcc.RadioItems(['All', 'Positive', 'Negative'], id='radio-update-edge-options', value='All', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
+], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
+
+normalise_checkbox = html.Div([dcc.Checklist(['Normalise frequency'], id='checkbox-update-normalise', value=['Normalise frequency'], inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'})],
+                              style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
+
 update_button = html.Div([
     dbc.Button("Update", id='update-button', color="primary", className="mr-1", style = {'margin-left': '20px'})
 ], style = {'display': 'inline-block'})
 
-options_div = html.Div([graph_type_radio, node_type_radio, edge_type_radio, colour_type_radio, colour_source_radio, update_button])
+options_div = html.Div([node_type_radio, edge_type_radio, colour_type_radio, colour_source_radio, show_edge_options_radio, normalise_checkbox, update_button])
 
 graph = html.Div([cyto.Cytoscape(
         id='BiT',
@@ -222,7 +241,7 @@ weight_slider = html.Div([
     html.P("Weight threshold", id='weight-slider-output', style={'margin-left': '20px'}),
     dcc.RangeSlider(
         min = min_weight,
-        max = max_weight,
+        max = max_weight + 1,
         step = 1,
         value = [min_weight, max_weight],
         marks = weight_bins,
@@ -235,7 +254,7 @@ tooltip = html.Div([
     html.P(id='tooltip')
 ], style={'margin-left': '10px'})
 
-graph_tab = html.Div([database_dropdown, layout_dropdown, team_dropdown, meeting_dropdown, team_dropdown_compare, meeting_dropdown_compare, options_div, graph, weight_slider, tooltip])
+graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip])
 
 app.layout = graph_tab
 
@@ -243,45 +262,44 @@ app.layout = graph_tab
         Output('tooltip', 'children'),
         [Input('BiT', 'mouseoverNodeData'),
         Input('BiT', 'mouseoverEdgeData')])
-def mouseoverNodeData(node_data, edge_data):
-    if node_data or edge_data:
+def mouseover_node_data(hover_node_data, hover_edge_data):
+    if hover_node_data or hover_edge_data:
         component = list(ctx.triggered_prop_ids.keys())[0]
-        input = ""
+        text_input = ""
         if 'Node' in component:
-            input = 'Node'
+            text_input = 'Node'
         if 'Edge' in component:
-            input = 'Edge'
-        if input == 'Node':
-            return node_data['id'] + ", with frequency: " + str(node_data['freq']) + " " + node_data['stats']
-        elif input == 'Edge':
+            text_input = 'Edge'
+        if text_input == 'Node':
+            return hover_node_data['id'] + ", with frequency: " + str(round(float(hover_node_data['freq']), 3)) + " " + hover_node_data['stats']
+        elif text_input == 'Edge':
             if node_type == 'Behaviours':
                 if edge_type == 'Frequency':
-                    return edge_data['source'].upper() + " -> " + edge_data['target'].upper() + ": " + str(edge_data['original_weight']) + " " + edge_data['stats']
+                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " " + hover_edge_data['stats']
                 else:
-                    return edge_data['source'].upper() + " -> " + edge_data['target'].upper() + ": " + str(edge_data['original_weight']) + " (" + str(round(edge_data['weight'], 2)) + "%)" + " " + edge_data['stats']
+                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats']
             else:
                 if edge_type == 'Frequency':
-                    return edge_data['source'] + " -> " + edge_data['target'] + ", " + edge_data['behaviour'] + ": " + str(edge_data['original_weight']) + " " + edge_data['stats']
+                    return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
                 else:
-                    return edge_data['source'] + " -> " + edge_data['target'] + ", " + edge_data['behaviour'] + ": " + str(edge_data['original_weight']) + " (" + str(edge_data['weight']) + "%)" + " " + edge_data['stats']
-
+                    return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats']
 
 @callback(Output('BiT', 'elements', allow_duplicate=True),
             Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
 def select_node(selected_nodes):
     if len(selected_nodes) == 0:
-        return get_original_edges(edge_data, node_type, colour_type, colour_source, graph_type, edge_signs, edge_stats) + get_original_nodes(node_data, node_type, leader, graph_type, node_signs, colour_type, node_stats)
+        return get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats) + get_original_nodes(node_data, node_type, node_signs,colour_type, node_stats)
     else:
         current_edges = []
         for node in selected_nodes:
-            for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, graph_type, edge_signs, edge_stats):
+            for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
                 if colour_source == 'Source':
                     if edge['data']['source'] == node['id']:
                         current_edges.append(edge)
                 else:
                     if edge['data']['target'] == node['id']:
                         current_edges.append(edge)
-        return current_edges + get_original_nodes(node_data, node_type, leader, graph_type, node_signs, colour_type, node_stats)
+        return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 
 @callback(Output('BiT', 'layout'),
               Input('dropdown-update-layout', 'value'))
@@ -291,10 +309,28 @@ def update_layout(layout):
         #'animate': True
     }
 
-@callback(Input('dropdown-update-database', 'value'),prevent_initial_call=True)
+@callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
+        Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
+    Input('dropdown-update-group', 'value'),
+    prevent_initial_call=True)
+def update_group(value):
+    global group_by
+    group_by = value
+    return get_teams_for_group(database_1, value), get_teams_for_group(database_2, value)
+
+@callback(Output('dropdown-update-team', 'options'),
+Input('dropdown-update-database', 'value'),prevent_initial_call=True)
 def update_database(value):
-    global database
-    database = value
+    global database_1
+    database_1 = value
+    return get_teams_for_group(value, group_by)
+
+@callback(Output('dropdown-update-team-compare', 'options'),
+Input('dropdown-update-database-compare', 'value'),prevent_initial_call=True)
+def update_database(value):
+    global database_2
+    database_2 = value
+    return get_teams_for_group(value, group_by)
 
 @callback(
     [Output('BiT', 'elements'),
@@ -303,29 +339,32 @@ def update_database(value):
 def update_graph(selected_weight):
     global nodes, edges
     if selected_weight == min_weight:
-        nodes = get_original_nodes(node_data, node_type, leader, graph_type, node_signs, colour_type, node_stats)
-        edges = get_original_edges(edge_data, node_type, colour_type, colour_source, graph_type, edge_signs, edge_stats)
+        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+        edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
         return edges + nodes, "Weight threshold: " + str(selected_weight)
     else:
         # Remove edges with weight less than selected_weight
         current_edges = []
-        for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, graph_type, edge_signs, edge_stats):
-            if edge_type == 'Probability':
-                if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-                    current_edges.append(edge)
+        for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+            if show_edges == 'All':
+                if edge_type == 'Probability':
+                    if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+                        current_edges.append(edge)
+                else:
+                    if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+                        current_edges.append(edge)
             else:
-                if log2(selected_weight[0]) <= edge['data']['weight'] <= log2(selected_weight[1]):
-                    current_edges.append(edge)
-        nodes = get_original_nodes(node_data, node_type, leader, graph_type, node_signs, colour_type, node_stats)
+                if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
+                    if edge_type == 'Probability':
+                        if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+                            current_edges.append(edge)
+                    else:
+                        if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+                            current_edges.append(edge)
+        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
         edges = current_edges
         # Format selected_weight to display only 2 decimal places
         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
-
-@callback(Input('radio-update-graph-type', 'value'),
-    prevent_initial_call=True)
-def update_graph_type(value):
-    global graph_type
-    graph_type = value
 
 @callback(Input('radio-update-nodes', 'value'),
     prevent_initial_call=True)
@@ -351,14 +390,35 @@ def update_colour_source(value):
     global colour_source
     colour_source = value
 
+@callback(Output('BiT', 'elements', allow_duplicate=True),
+    Input('radio-update-edge-options', 'value'),
+    prevent_initial_call=True)
+def update_show_edges(value):
+    global show_edges
+    show_edges = value
+    global nodes, edges
+    if value == 'All':
+        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+        edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
+        return edges + nodes
+    else:
+        # Remove edges with weight less than selected_weight
+        current_edges = []
+        for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+            if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == value.lower():
+                current_edges.append(edge)
+        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+        edges = current_edges
+        return edges + nodes
+
 @callback(
     [Output('dropdown-update-meeting', 'options')],
     Input('dropdown-update-team', 'value'), prevent_initial_call=True)
 def update_meeting_display(value):
     if value != '':
-        global team
-        team = value
-        return [get_meetings_for_team(database, value)]
+        global team_1
+        team_1 = value
+        return [get_meetings_for_team(database_1, group_by, value)]
     else:
         return [[]]
 
@@ -366,23 +426,31 @@ def update_meeting_display(value):
             Input('dropdown-update-team-compare', 'value'), prevent_initial_call=True)
 def update_meeting_display_compare(value):
     if value != '':
-        global team_compare
-        team_compare = value
-        return [get_meetings_for_team(database, value)]
+        global team_2
+        team_2 = value
+        return [get_meetings_for_team(database_2, group_by, value)]
     else:
         return [[]]
 
 @callback(Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
 def update_graph_with_meeting(value):
-    global meeting
+    global meeting_1
     if value is not None:
-        meeting = value
+        meeting_1 = value
 
 @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
 def update_graph_with_meeting_compare(value):
-    global meeting_compare
+    global meeting_2
     if value is not None:
-        meeting_compare = value
+        meeting_2 = value
+
+@callback(Input('checkbox-update-normalise', 'value'), prevent_initial_call=True)
+def update_normalise(value):
+    global normalise
+    if 'Normalise frequency' in value:
+        normalise = True
+    else:
+        normalise = False
 
 @callback([Output('BiT', 'elements', allow_duplicate=True),
              Output('BiT', 'stylesheet'),
@@ -395,17 +463,12 @@ def update_graph_with_meeting_compare(value):
             Input('update-button', 'n_clicks'),
             prevent_initial_call=True)
 def update_graph_with_button(n_clicks):
-    global teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
-    valid = check_valid_options(node_type, colour_type, team)
+    global teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
+    valid = check_valid_options(node_type, colour_type, team_1)
     if valid:
-        if graph_type != 'Comparison':
-            teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_names, behaviours, node_stats, edge_stats = load_dataset(
-            database, node_type, edge_type, team, meeting, colour_type, colour_source, graph_type)
-            return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
-        else:
-            teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(
-            database, node_type, edge_type, team, meeting, team_compare, meeting_compare, colour_type, colour_source, graph_type)
-            return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
+        teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(
+        group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
+        return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
     else:
         raise PreventUpdate
 

@@ -6,66 +6,63 @@ NODE_MAP_MIN_SIZE = 40
 NODE_MAP_MAX_SIZE = 150
 EDGE_MAP_MIN_SIZE = 1
 EDGE_MAP_MAX_SIZE = 20
+NORMALISE_MULTIPLIER = 100
 
 events_file = 'Events.csv'
 entities_file = 'EntityAttributes.csv'
-participants_file = 'Participants.sav'
+teams_file = 'SequenceAttributes.csv'
+variable_separation_file = 'Variables.csv'
 
-def load_dataset(dataset_name, node_type, edge_type, team, meeting, colour_type, colour_source, graph_type):
-    events, entities, teams, behaviours, participants, meetings = read_files(dataset_name)
-    if node_type == 'Behaviours':
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, leader, node_stats = get_behaviour_node_data(events, teams, team, meeting, participants, graph_type)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_behaviour_edge_data(edge_type, teams, events, team, meeting, graph_type)
-    else:
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, entity_list, leader, node_stats = get_participant_node_data(events, entities, team, meeting, participants)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_participant_edge_data(edge_type, events, team, meeting, entity_list)
-    colors = get_colors(node_names, behaviours, colour_type)
-    selector_node_classes, selector_edge_classes = get_selector_classes(node_names, behaviours, colors, node_size_map, edge_size_map, colour_type)
-    node_data, nodes = get_nodes(node_names, acronyms, freq, sizes, node_type, leader, colour_type, node_stats)
-    if node_type == 'Behaviours':
-        edges = get_behaviour_edges(edge_data, colour_source, edge_stats)
-    else:
-        edges = get_participant_edges(edge_data, colour_type, colour_source)
-    return teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_names, behaviours, node_stats, edge_stats
+def load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise):
+    # Load data
+    events_1, entities_1, teams_1, behaviours_1, meetings_1 = read_files(database_1)
+    events_2, entities_2, teams_2, behaviours_2, meetings_2 = read_files(database_2)
 
-def load_dataset_comparison(database, node_type, edge_type, team, meeting, team_compare, meeting_compare, colour_type, colour_source, graph_type):
-    events, entities, teams, behaviours, participants, meetings = read_files(database)
     node_data_list = []
     edge_data_list = []
+
+    team_list_1 = []
+    team_list_2 = []
+    if group_by != 'Teams':
+        team_list_1 = read_teams_from_file(database_1, group_by, team_1)
+        team_list_2 = read_teams_from_file(database_2, group_by, team_2)
+
     if node_type == 'Behaviours':
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, leader, node_stats = get_behaviour_node_data(events, teams, team, meeting, participants, graph_type)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_behaviour_edge_data(edge_type, teams, events, team, meeting, graph_type)
+        node_names, freq = get_behaviour_node_data(events_1, team_list_1, team_1, meeting_1, normalise)
+        edge_data = get_behaviour_edge_data(edge_type, team_list_1, events_1, team_1, meeting_1, normalise)
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, leader, node_stats = get_behaviour_node_data(events, teams, team_compare, meeting_compare, participants, graph_type)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_behaviour_edge_data(edge_type, teams, events, team_compare, meeting_compare, graph_type)
+        node_names, freq = get_behaviour_node_data(events_2, team_list_2, team_2, meeting_2, normalise)
+        edge_data = get_behaviour_edge_data(edge_type, team_list_2, events_2, team_2, meeting_2, normalise)
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
     else:
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, entity_list, leader, node_stats = get_participant_node_data(events, entities, team, meeting, participants)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_participant_edge_data(edge_type, events, team, meeting, entity_list)
+        node_names, freq, entities = get_participant_node_data(events_1, entities_1, team_1, meeting_1, normalise)
+        edge_data = get_participant_edge_data(edge_type, events_1, team_1, meeting_1, entities, normalise)
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
-        node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, entity_list, leader, node_stats = get_participant_node_data(events, entities, team_compare, meeting_compare, participants)
-        edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_stats = get_participant_edge_data(edge_type, events, team_compare, meeting_compare, entity_list)
+        node_names, freq, entities = get_participant_node_data(events_2, entities_2, team_2, meeting_2, normalise)
+        edge_data = get_participant_edge_data(edge_type, events_2, team_2, meeting_2, entities, normalise)
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
     node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, node_signs, node_stats = get_node_data_diff(node_data_list, node_type)
     edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs, edge_stats = get_edge_data_diff(edge_data_list, edge_type)
-    colors = get_colors(node_names, behaviours, colour_type)
-    selector_node_classes, selector_edge_classes = get_selector_classes_comparison(node_names, behaviours, colors, node_size_map, edge_size_map, colour_type)
-    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, leader, colour_type)
+    colors = get_colors(node_names, behaviours_1, colour_type)
+    selector_node_classes, selector_edge_classes = get_selector_classes_comparison(node_names, behaviours_1, colors, node_size_map, edge_size_map, colour_type)
+    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type)
     if node_type == 'Behaviours':
         edges = get_behaviour_edges_comparison(edge_data, colour_source, edge_signs)
     else:
         edges = get_participant_edges_comparison(edge_data, colour_type, colour_source, edge_signs)
-    return teams, meetings, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, leader, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
+    return teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours_1, node_stats, edge_stats
 
 def read_files(dataset_name):
     events = pd.read_csv(dataset_name + '/' + events_file)
     entities = pd.read_csv(dataset_name + '/' + entities_file)
     # Keep only sequenceId, event and entityId columns in events
     events = events[['sequenceId', 'event', 'entityId']]
+    # Remove event Online, if present
+    events = events[events['event'] != 'Online']
     # Keep only entityId, ParameterKey and ParameterValue columns in entities
     entities = entities[['entityId', 'ParameterKey', 'ParameterValue']]
 
@@ -81,158 +78,66 @@ def read_files(dataset_name):
     behaviours = events['event'].unique()
     behaviours = behaviours[behaviours != 'Break']
 
-    # Participants
-    if '2017' in dataset_name:
-        participants = pd.read_spss(dataset_name + '/' + participants_file)
-        participants = participants[['teamid', 'nameinfile', 'leader_meeting']]
-    else:
-        participants = []
-
     # Get meetings
     meetings = events['sequenceId'].unique()
     meetings = [meeting.split('_')[0] for meeting in meetings]
     meetings = list(set(meetings))
     meetings.sort()
-    meetings.append('All')
+    meetings.insert(0, 'All')
 
-    return events, entities, teams, behaviours, participants, meetings
+    return events, entities, teams, behaviours, meetings
 
-def get_behaviour_node_data(events, team_list, team, meeting, participants, graph_type):
-    # Remove All from teams (if present)
-    teams = team_list.copy()
-    if 'All' in teams:
-        teams.remove('All')
-    leader = ''
-    if team != 'All':
+def get_behaviour_node_data(events, team_list, team, meeting, normalise):
+    # Check if team_list is empty
+    if not team_list:
+        if team != 'All':
+            # Keep only rows where sequenceId contains team
+            events = events[events['sequenceId'].str.split('_').str[1] == team]
+    else:
         # Keep only rows where sequenceId contains team
-        events = events[events['sequenceId'].str.split('_').str[1] == team]
-        # Keep only rows where meeting is equal to the selected meeting
-        if meeting != 'All':
-            events = events[events['sequenceId'].str.split('_').str[0] == meeting]
-            # Get participants in the selected team
-            leader = participants[(participants['teamid'] == team) & (participants['leader_meeting'] == int(meeting))]['nameinfile']
-            if len(leader) > 0:
-                leader = "Leader: " + ",".join(leader)
+        events = events[events['sequenceId'].str.split('_').str[1].isin(team_list)]
 
-    elif meeting != 'All':
-        # Keep only rows where meeting is equal to the selected meeting
+    # Keep only rows where meeting is equal to the selected meeting
+    if meeting != 'All':
         events = events[events['sequenceId'].str.split('_').str[0] == meeting]
 
     # Get node names
     node_names = events['event'].unique()
     node_names = node_names[node_names != 'Break']
 
-    # Get acronyms
-    acronyms = [event.replace('_', ' ') for event in node_names]
-    acronyms = ["".join([word[0] for word in event.split()]) for event in acronyms]
-    acronyms = [name.upper() for name in acronyms]
-    acronyms = list(acronyms)
-
-    # Create a dictionary with node names as keys and acronyms as values
-    acronyms_dict = dict(zip(node_names, acronyms))
-
     # Get additional stats for each node if team and/or meeting = 'All'
     stats = {}
     for name in node_names:
         stats[name] = ''
-    if graph_type != 'Comparison':
-        if team == 'All':
-            team_freqs = {}
-            for t in teams:
-                team_events = events[events['sequenceId'].str.split('_').str[1] == t]
-                team_freq = team_events['event'].value_counts()
-                # If one node_name is not present in team_freq, add it with value 0
-                for name in node_names:
-                    if name not in team_freq:
-                        team_freq[name] = 0
-                team_freq = team_freq[node_names]
-                team_freqs[t] = team_freq
-            # Get the team with the highest frequency of each behaviour
-            for name in node_names:
-                max_freq = 0
-                max_team = ''
-                min_freq = 1000000
-                min_team = ''
-                sum = 0
-                for t in teams:
-                    if team_freqs[t][name] > max_freq:
-                        max_freq = team_freqs[t][name]
-                        max_team = t
-                    if team_freqs[t][name] < min_freq:
-                        min_freq = team_freqs[t][name]
-                        min_team = t
-                    sum += team_freqs[t][name]
-                stats[name] += 'Most frequent team: ' + max_team + ' (' + str(max_freq) + ')'
-                stats[name] += ' Least frequent team: ' + min_team + ' (' + str(min_freq) + ')'
-                # Get average frequency
-                stats[name] += ' Average frequency: ' + str(round(sum / len(teams),2))
-        if meeting == 'All':
-            # Get unique sequenceIds
-            sequenceIds = events['sequenceId'].unique()
-            # Get frequency of each behaviour in each meeting
-            meeting_freqs = {}
-            for s in sequenceIds:
-                meeting_events = events[events['sequenceId'] == s]
-                meeting_freq = meeting_events['event'].value_counts()
-                # If one node_name is not present in meeting_freq, add it with value 0
-                for name in node_names:
-                    if name not in meeting_freq:
-                        meeting_freq[name] = 0
-                meeting_freq = meeting_freq[node_names]
-                meeting_freqs[s] = meeting_freq
-            # Get the meeting with the highest frequency of each behaviour
-            for name in node_names:
-                max_freq = 0
-                max_meeting = ''
-                min_freq = 1000000
-                min_meeting = ''
-                sum = 0
-                for m in sequenceIds:
-                    if meeting_freqs[m][name] > max_freq:
-                        max_freq = meeting_freqs[m][name]
-                        max_meeting = m
-                    if meeting_freqs[m][name] < min_freq:
-                        min_freq = meeting_freqs[m][name]
-                        min_meeting = m
-                    sum += meeting_freqs[m][name]
-                stats[name] += ' Most frequent meeting: ' + max_meeting + ' (' + str(max_freq) + ')'
-                stats[name] += ' Least frequent meeting: ' + min_meeting + ' (' + str(min_freq) + ')'
 
     # Get frequency of events
     freq = events['event'].value_counts()
+    # If normalise is True, divide by the number of events and multiply by NORMALISE_MULTIPLIER
+    if normalise:
+        freq = (freq / len(events)) * NORMALISE_MULTIPLIER
     # If 'Break' is in freq, remove it
     if 'Break' in freq:
         freq = freq.drop('Break')
     # Sort freq in the same order as node_names
     freq = freq[node_names]
-    sizes = freq.values / 2.0
-    sizes = [max(250, size) for size in sizes]
-    # Size map
-    size_map = "mapData(size," + str(min(sizes)) + "," + str(max(sizes)) + "," + str(NODE_MAP_MIN_SIZE) + "," + str(NODE_MAP_MAX_SIZE) + ")"
-    return node_names, acronyms, acronyms_dict, freq, sizes, size_map, leader, stats
+    return node_names, freq
 
-def get_participant_node_data(events, entities, team, meeting, participants_attributes):
+def get_participant_node_data(events, entities, team, meeting, normalise):
     # Get entityIds of participants in the team.
     # Keep only rows where sequenceId split by '_' is equal to team
-    entityIds = events[events['sequenceId'].str.split('_').str[1] == team]['entityId'].unique()
+    entity_ids = events[events['sequenceId'].str.split('_').str[1] == team]['entityId'].unique()
 
     # Remove -1 from entityIds
-    entityIds = entityIds[entityIds != -1]
+    entity_ids = entity_ids[entity_ids != -1]
     # Keep only rows where ParameterKey is 'Name'
     entities = entities[entities['ParameterKey'] == 'name']
     # Keep only rows where entityId is in entityIds
-    entities = entities[entities['entityId'].isin(entityIds)]
+    entities = entities[entities['entityId'].isin(entity_ids)]
     # Get names of participants
     participants = entities['ParameterValue'].unique()
 
     # Get node names
     node_names = participants
-
-    # Get acronyms
-    acronyms = participants
-
-    # Create a dictionary with node names as keys and acronyms as values
-    acronyms_dict = dict(zip(node_names, acronyms))
 
     # Get additional stats for each node if team and/or meeting = 'All'
     stats = {}
@@ -241,26 +146,19 @@ def get_participant_node_data(events, entities, team, meeting, participants_attr
 
     # Get frequency of participants
     # Keep events where entityId is in entityIds
-    events = events[events['entityId'].isin(entityIds)]
+    events = events[events['entityId'].isin(entity_ids)]
     # Keep meeting only
-    leader = ''
     if meeting != 'All':
         events = events[events['sequenceId'].str.split('_').str[0] == meeting]
-        # Get participants in the selected team
-        leader = participants_attributes[(participants_attributes['teamid'] == team) & (participants_attributes['leader_meeting'] == int(meeting))][
-            'nameinfile']
-        if len(leader) > 0:
-            leader = "Leader: " + ",".join(leader)
 
     freq = events['entityId'].value_counts()
+    # If normalise is True, divide by the number of events and multiply by NORMALISE_MULTIPLIER
+    if normalise:
+        freq = (freq / len(events)) * NORMALISE_MULTIPLIER
 
     # Replace entityIds with names
     freq.index = entities[entities['entityId'].isin(freq.index)]['ParameterValue']
-    sizes = freq.values / 2.0
-    sizes = [max(250, size) for size in sizes]
-    # Size map
-    size_map = "mapData(size," + str(min(sizes)) + "," + str(max(sizes)) + "," + str(NODE_MAP_MIN_SIZE) + "," + str(NODE_MAP_MAX_SIZE) + ")"
-    return node_names, acronyms, acronyms_dict, freq, sizes, size_map, entities, leader, stats
+    return node_names, freq, entities
 
 def get_node_data_diff(node_data_list, node_type):
     node_names = []
@@ -299,16 +197,16 @@ def get_node_data_diff(node_data_list, node_type):
     freq_diff = freq_diff[node_names_diff]
 
     # Get size
-    sizes = freq_diff.values / 2.0
+    sizes = freq_diff.values
+
     # Get an array of 1 and -1 to depending on the size value
     signs = [size / abs(size) for size in sizes]
     # Change -1 for "negative" and 1 for "positive" and 0 for "neutral" in signs
     signs = ["negative" if sign == -1 else "positive" if sign == 1 else "" for sign in signs]
 
-
     # Change the sign of the sizes to positive
     sizes = [abs(size) for size in sizes]
-    sizes = [max(250, size) for size in sizes]
+    #sizes = [max(10, size) for size in sizes]
 
     # Change the sign of freq_diff to positive
     freq_diff = freq_diff.abs()
@@ -318,20 +216,20 @@ def get_node_data_diff(node_data_list, node_type):
 
     return node_names_diff, acronyms, acronyms_dict, freq_diff, sizes, size_map, signs, stats
 
-def get_behaviour_edge_data(edge_type, team_list, events, team, meeting, graph_type):
-    # Remove All from teams (if present)
-    teams = team_list.copy()
-    if 'All' in teams:
-        teams.remove('All')
-    if team != 'All':
+def get_behaviour_edge_data(edge_type, team_list, events, team, meeting, normalise):
+    # Check if team_list is empty
+    if not team_list:
+        if team != 'All':
+            # Keep only rows where sequenceId contains team
+            events = events[events['sequenceId'].str.split('_').str[1] == team]
+    else:
         # Keep only rows where sequenceId contains team
-        events = events[events['sequenceId'].str.split('_').str[1] == team]
-        # Keep only rows where meeting is equal to the selected meeting
-        if meeting != 'All':
-            events = events[events['sequenceId'].str.split('_').str[0] == meeting]
-    elif meeting != 'All':
-        # Keep only rows where meeting is equal to the selected meeting
+        events = events[events['sequenceId'].str.split('_').str[1].isin(team_list)]
+
+    # Keep only rows where meeting is equal to the selected meeting
+    if meeting != 'All':
         events = events[events['sequenceId'].str.split('_').str[0] == meeting]
+
     # Get edges
     # From events, count the number of transitions between events. Save in a dictionary
     edges = {}
@@ -358,104 +256,17 @@ def get_behaviour_edge_data(edge_type, team_list, events, team, meeting, graph_t
             source = key[0]
             edges[key] = (value / source_sum[source] * 100)
 
-    # Get additional stats for each node if team and/or meeting = 'All'
-    stats = {}
-    for source,target in list(edges.keys()):
-        stats[source,target] = ''
-    if graph_type != 'Comparison':
-        if team == 'All':
-            team_freqs = {}
-            for t in teams:
-                team_freq = {}
-                team_events = events[events['sequenceId'].str.split('_').str[1] == t]
-                # Regenerate index
-                team_events = team_events.reset_index(drop=True)
-                for i in range(1, len(team_events)):
-                    if (team_events['event'][i - 1], team_events['event'][i]) in team_freq:
-                        team_freq[(team_events['event'][i - 1], team_events['event'][i])] += 1
-                    else:
-                        team_freq[(team_events['event'][i - 1], team_events['event'][i])] = 1
-                # If one source, target pair is not present in team_freq, add it with value 0
-                for name in list(edges.keys()):
-                    if name not in team_freq:
-                        team_freq[name] = 0
-                team_freqs[t] = team_freq
-            # Get the team with the highest frequency of each behaviour
-            for source,target in list(edges.keys()):
-                max_freq = 0
-                max_team = ''
-                min_freq = 1000000
-                min_team = ''
-                sum = 0
-                for t in teams:
-                    if team_freqs[t][source,target] > max_freq:
-                        max_freq = team_freqs[t][source,target]
-                        max_team = t
-                    if team_freqs[t][source,target] < min_freq:
-                        min_freq = team_freqs[t][source,target]
-                        min_team = t
-                    sum += team_freqs[t][source,target]
-                stats[source,target] += 'Most frequent team: ' + max_team + ' (' + str(max_freq) + ')'
-                stats[source,target] += ' Least frequent team: ' + min_team + ' (' + str(min_freq) + ')'
-                # Get average frequency
-                stats[source,target] += ' Average frequency: ' + str(round(sum / len(teams),2))
-        if meeting == 'All':
-            # Get unique sequenceIds
-            sequenceIds = events['sequenceId'].unique()
-            # Get frequency of each behaviour in each meeting
-            meeting_freqs = {}
-            for s in sequenceIds:
-                meeting_freq = {}
-                meeting_events = events[events['sequenceId'] == s]
-                # Regenerate index
-                meeting_events = meeting_events.reset_index(drop=True)
-                for i in range(1, len(meeting_events)):
-                    if (meeting_events['event'][i - 1], meeting_events['event'][i]) in meeting_freq:
-                        meeting_freq[(meeting_events['event'][i - 1], meeting_events['event'][i])] += 1
-                    else:
-                        meeting_freq[(meeting_events['event'][i - 1], meeting_events['event'][i])] = 1
-                # If one node_name is not present in meeting_freq, add it with value 0
-                for name in list(edges.keys()):
-                    if name not in meeting_freq:
-                        meeting_freq[name] = 0
-                meeting_freqs[s] = meeting_freq
-            # Get the meeting with the highest frequency of each behaviour
-            for source,target in list(edges.keys()):
-                max_freq = 0
-                max_meeting = ''
-                min_freq = 1000000
-                min_meeting = ''
-                sum = 0
-                for m in sequenceIds:
-                    if meeting_freqs[m][source,target] > max_freq:
-                        max_freq = meeting_freqs[m][source,target]
-                        max_meeting = m
-                    if meeting_freqs[m][source,target] < min_freq:
-                        min_freq = meeting_freqs[m][source,target]
-                        min_meeting = m
-                    sum += meeting_freqs[m][source,target]
-                stats[source,target] += ' Most frequent meeting: ' + max_meeting + ' (' + str(max_freq) + ')'
-                stats[source,target] += ' Least frequent meeting: ' + min_meeting + ' (' + str(min_freq) + ')'
-
-    weights = list(edges.values())
-    min_weight = min(weights)
-    max_weight = max(weights)
-
-    # Create 10 bins in the range of min_weight and max_weight
-    weight_bins = np.linspace(min_weight, max_weight, 20)
-    # Create a dictionary with the bins as keys and the bins as values
-    weight_bins = {str(int(bin)): str(int(bin)) for bin in weight_bins}
-
     # Convert dictionary to a list of 4-tuples
     if edge_type == 'Frequency':
-        edge_data = [(key[0], key[1], "", log2(value), value) for key, value in edges.items()]
-        edge_size_map = "mapData(weight," + str(log2(min_weight)) + "," + str(log2(max_weight)) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
+        if not normalise:
+            edge_data = [(key[0], key[1], "", log2(value), value) for key, value in edges.items()]
+        else:
+            edge_data = [(key[0], key[1], "", (value / len(events)) * NORMALISE_MULTIPLIER, value) for key, value in edges.items()]
     else:
         edge_data = [(key[0], key[1], "", value, int(round((value / 100) * source_sum[key[0]]))) for key, value in edges.items()]
-        edge_size_map = "mapData(weight," + str(min_weight) + "," + str(max_weight) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
-    return edge_data, min_weight, max_weight, weight_bins, edge_size_map, stats
+    return edge_data
 
-def get_participant_edge_data(edge_type, events, team, meeting, entity_list):
+def get_participant_edge_data(edge_type, events, team, meeting, entity_list, normalise):
 
     # Get events rows where sequenceId contains team
     events = events[events['sequenceId'].str.split('_').str[1] == team]
@@ -491,33 +302,17 @@ def get_participant_edge_data(edge_type, events, team, meeting, entity_list):
             source = key[0]
             edges[key] = (value / source_sum[source] * 100)
 
-
-    # Get additional stats for each node if team and/or meeting = 'All'
-    stats = {}
-    for name in list(edges.keys()):
-        stats[name] = ''
-    # Remove third element from the key
-    stats = {(key[0], key[1]): value for key, value in stats.items()}
-
-    weights = list(edges.values())
-    min_weight = min(weights)
-    max_weight = max(weights)
-
-    # Create 10 bins in the range of min_weight and max_weight
-    weight_bins = np.linspace(min_weight, max_weight, 20)
-    # Create a dictionary with the bins as keys and the bins as values
-    weight_bins = {str(int(bin)): str(int(bin)) for bin in weight_bins}
-
     # Divide weights by max_weight
     #weights = [weight / max_weight for weight in weights]
     # Convert dictionary to a list of 5-tuples
     if edge_type == 'Frequency':
-        edge_data = [(key[0], key[1], key[2], log2(value), value) for key, value in edges.items()]
-        edge_size_map = "mapData(weight," + str(log2(min_weight)) + "," + str(log2(max_weight)) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
+        if not normalise:
+            edge_data = [(key[0], key[1], key[2], log2(value), value) for key, value in edges.items()]
+        else:
+            edge_data = [(key[0], key[1], key[2], (value / len(events)) * NORMALISE_MULTIPLIER, value) for key, value in edges.items()]
     else:
         edge_data = [(key[0], key[1], key[2], value, int(round((value / 100) * source_sum[key[0]]))) for key, value in edges.items()]
-        edge_size_map = "mapData(weight," + str(min_weight) + "," + str(max_weight) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
-    return edge_data, min_weight, max_weight, weight_bins, edge_size_map, stats
+    return edge_data
 
 def get_edge_data_diff(edge_data_list, edge_type):
     edge_data = []
@@ -556,7 +351,7 @@ def get_edge_data_diff(edge_data_list, edge_type):
         edge_data_diff[key] = (edge_data[1][key][0] - edge_data[0][key][0], edge_data[1][key][1] - edge_data[0][key][1])
 
     # Remove edges with weight 0
-    edge_data_diff = {key: value for key, value in edge_data_diff.items() if value[1] != 0}
+    edge_data_diff = {key: value for key, value in edge_data_diff.items() if value[0] != 0}
 
     # Get additional stats for each node if team and/or meeting = 'All'
     stats = {}
@@ -566,13 +361,13 @@ def get_edge_data_diff(edge_data_list, edge_type):
     stats = {(key[0], key[1]): value for key, value in stats.items()}
 
     # Dictionary of signs (positive or negative) for each weight
-    signs = {key: value[1] / abs(value[1]) for key, value in edge_data_diff.items()}
+    signs = {key: value[0] / abs(value[0]) for key, value in edge_data_diff.items()}
     # Change -1 for "negative" and 1 for "positive" and 0 for "" in signs
     signs = {key: "negative" if sign == -1 else "positive" if sign == 1 else "" for key, sign in signs.items()}
     # Change the sign of the weights to positive
-    edge_data_diff = {key: (abs(value[0]), abs(value[1])) for key, value in edge_data_diff.items()}
+    edge_data_diff = {key: (abs(value[0]), abs(value[0])) for key, value in edge_data_diff.items()}
     # Keep the original weights
-    edge_data_diff = {key: value[1] for key, value in edge_data_diff.items()}
+    edge_data_diff = {key: value[0] for key, value in edge_data_diff.items()}
 
     if edge_type == 'Probability':
         source_sum = {}
@@ -591,14 +386,14 @@ def get_edge_data_diff(edge_data_list, edge_type):
     min_weight = min(weights)
     max_weight = max(weights)
 
-    # Create 10 bins in the range of min_weight and max_weight
-    weight_bins = np.linspace(min_weight, max_weight, 20)
+    # Create 20 bins in the range of min_weight and max_weight + 1 (to include max_weight)
+    weight_bins = np.linspace(min_weight, max_weight + 1, 20)
     # Create a dictionary with the bins as keys and the bins as values
     weight_bins = {str(int(bin)): str(int(bin)) for bin in weight_bins}
 
     # Convert dictionary to a list of 4-tuples
     if edge_type == 'Frequency':
-        edge_data_diff = [(key[0], key[1], key[2], log2(value), value) for key, value in edge_data_diff.items()]
+        edge_data_diff = [(key[0], key[1], key[2], value, value) for key, value in edge_data_diff.items()]
         edge_size_map = "mapData(weight," + str(log2(min_weight)) + "," + str(log2(max_weight)) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
     else:
         edge_data_diff = [(key[0], key[1], key[2], value, int(round((value / 100) * source_sum[key[0]]))) for key, value in edge_data_diff.items()]
@@ -627,66 +422,6 @@ def get_colors(keys, behaviours, colour_type):
     else:
         colors = dict(zip(keys, colors))
     return colors
-
-def get_selector_classes(node_names, behaviours, colors, node_size_map, edge_size_map, colour_type):
-    # Create a list of dictionaries with 'selector' and 'style' keys. 'selector' has a value of 'node' and 'style' has a dictionary
-    selector_node_classes = []
-    selector_edge_classes = []
-    names = node_names
-
-    if colour_type == "Behaviours":
-        names = behaviours
-
-    selector_node_classes.append(
-        {
-            'selector': '.nodeParticipant',
-            'style': {
-                'background-color': "#44444",
-                'line-color': "white",
-                'width': node_size_map,
-                'height': node_size_map
-            }
-        }
-    )
-    selector_node_classes.append(
-        {
-            'selector': '.nodeLeader',
-            'style': {
-                'background-color': "#444444",
-                'line-color': "FFFFFF",
-                'shape': "star",
-                'width': 100,
-                'height': 100
-            }
-        }
-    )
-    # Iterate over node names
-    for i, name in enumerate(names):
-        selector_node_classes.append(
-            {
-                'selector': '.node' + name,
-                'style': {
-                    'background-color': colors[name],
-                    'line-color': colors[name],
-                    'width': node_size_map,
-                    'height': node_size_map
-                }
-            }
-        )
-        selector_edge_classes.append(
-            {
-                'selector': '.edge' + name,
-                'style': {
-                    'line-color': colors[name],
-                    'target-arrow-color': colors[name],
-                    'target-arrow-shape': 'vee',
-                    'curve-style': 'bezier',
-                    'control-point-step-size': 100,
-                    'width': edge_size_map
-                }
-            }
-        )
-    return selector_node_classes, selector_edge_classes
 
 def get_selector_classes_comparison(node_names, behaviours, colors, node_size_map, edge_size_map, colour_type):
     # Create a list of dictionaries with 'selector' and 'style' keys. 'selector' has a value of 'node' and 'style' has a dictionary
@@ -787,49 +522,7 @@ def get_selector_classes_comparison(node_names, behaviours, colors, node_size_ma
         )
     return selector_node_classes, selector_edge_classes
 
-def get_nodes(node_names, acronyms, freq, sizes, node_type, leader, colour_type, stats):
-    # Create a list of random longitudes and latitudes with the size of the number of acronyms
-    longitudes = np.random.uniform(-180, 180, len(acronyms))
-    latitudes = np.random.uniform(-90, 90, len(acronyms))
-    # Create list of tuples with short name, label, long and lat
-    freq_values = freq.tolist()
-    node_data = list(zip(node_names, acronyms, freq_values, longitudes, latitudes, sizes))
-    if node_type == 'Behaviours':
-        nodes = [
-            {
-                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
-                'position': {'x': 20 * lat, 'y': -20 * long},
-                'classes': "node" + short
-            }
-            for short, label, freq, long, lat, size in node_data
-        ]
-    else:
-        if colour_type == 'Behaviours':
-            nodes = [
-                {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
-                    'position': {'x': 20 * lat, 'y': -20 * long},
-                    'classes': "nodeParticipant"
-                }
-                for short, label, freq, long, lat, size in node_data
-            ]
-        else:
-            nodes = [
-                {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
-                    'position': {'x': 20 * lat, 'y': -20 * long},
-                    'classes': "node" + short
-                }
-                for short, label, freq, long, lat, size in node_data
-            ]
-        # Change leader node class
-        if leader != '':
-            for node in nodes:
-                if node['data']['id'] in leader:
-                    node['classes'] = "nodeLeader"
-    return node_data, nodes
-
-def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, leader, colour_type):
+def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type):
     # Create a list of random longitudes and latitudes with the size of the number of acronyms
     longitudes = np.random.uniform(-180, 180, len(acronyms))
     latitudes = np.random.uniform(-90, 90, len(acronyms))
@@ -864,35 +557,11 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
                 }
                 for short, label, freq, long, lat, size in node_data
             ]
-        # Change leader node class
-        if leader != '':
-            for node in nodes:
-                if node['data']['id'] in leader:
-                    node['classes'] = "nodeLeader"
 
     # Change the class of each node depending on the sign of the size (add word positive or negative)
     for i, node in enumerate(nodes):
         node['classes'] += node_signs[i]
     return node_data, nodes
-
-def get_behaviour_edges(edge_data, colour_source, stats):
-    if colour_source == "Source":
-        edges = [
-            {
-                'data': {'source': source, 'target': target, 'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight, 'stats': stats[source, target]},
-                'classes': "edge" + source
-            }
-            for source, target, behaviour, weight, original_weight in edge_data
-        ]
-    else:
-        edges = [
-            {
-                'data': {'source': source, 'target': target, 'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight, 'stats': stats[source, target]},
-                'classes': "edge" + target
-            }
-            for source, target, behaviour, weight, original_weight in edge_data
-        ]
-    return edges
 
 def get_behaviour_edges_comparison(edge_data, colour_source, signs):
     if colour_source == "Source":
@@ -915,34 +584,6 @@ def get_behaviour_edges_comparison(edge_data, colour_source, signs):
     for i, edge in enumerate(edges):
         edge['classes'] += signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]
 
-    return edges
-
-def get_participant_edges(edge_data, colour_type, colour_source):
-    if colour_type == 'Behaviours':
-        edges = [
-            {
-                'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': ''},
-                'classes': "edge" + behaviour
-            }
-            for source, target, behaviour, weight, original_weight in edge_data
-        ]
-    else:
-        if colour_source == "Source":
-            edges = [
-                {
-                    'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': ''},
-                    'classes': "edge" + source
-                }
-                for source, target, behaviour, weight, original_weight in edge_data
-            ]
-        else:
-            edges = [
-                {
-                    'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': ''},
-                    'classes': "edge" + target
-                }
-                for source, target, behaviour, weight, original_weight in edge_data
-            ]
     return edges
 
 def get_participant_edges_comparison(edge_data, colour_type, colour_source, signs):
@@ -976,7 +617,7 @@ def get_participant_edges_comparison(edge_data, colour_type, colour_source, sign
         edge['classes'] += signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]
     return edges
 
-def get_original_nodes(node_data, node_type, leader, graph_type, node_signs, colour_type, stats):
+def get_original_nodes(node_data, node_type, node_signs, colour_type, stats):
     if node_type == 'Behaviours':
         original_nodes = [
             {
@@ -1005,18 +646,13 @@ def get_original_nodes(node_data, node_type, leader, graph_type, node_signs, col
                 }
                 for short, label, freq, long, lat, size in node_data
             ]
-        # Change leader node class
-        if leader != '':
-            for node in original_nodes:
-                if node['data']['id'] in leader:
-                    node['classes'] = "nodeLeader"
-    if graph_type == 'Comparison':
-        # Change the class of each node depending on the sign of the size (add word positive or negative)
-        for i, node in enumerate(original_nodes):
-            node['classes'] += node_signs[i]
+
+    # Change the class of each node depending on the sign of the size (add word positive or negative)
+    for i, node in enumerate(original_nodes):
+        node['classes'] += node_signs[i]
     return original_nodes
 
-def get_original_edges(edge_data, node_type, colour_type, colour_source, graph_type, edge_signs, stats):
+def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, stats):
     if node_type == 'Behaviours':
         if colour_source == "Source":
             original_edges = [
@@ -1060,35 +696,107 @@ def get_original_edges(edge_data, node_type, colour_type, colour_source, graph_t
                     }
                     for source, target, behaviour, weight, original_weight in edge_data
             ]
-    if graph_type == 'Comparison':
-        for i, edge in enumerate(original_edges):
-            edge['classes'] += edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]
+
+    for i, edge in enumerate(original_edges):
+        edge['classes'] += edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]
     return original_edges
 
-def get_meetings_for_team(database, team):
-    events, entities, teams, behaviours, leader, meetings = read_files(database)
-    meetings = ['All']
+def get_teams_for_database(database):
+    events, entities, teams, behaviours, meetings = read_files(database)
+    options = [
+        {'label': name, 'value': name}
+        for name in teams
+    ]
+    return options
 
-    if team != 'All':
-        # Iterate through events
-        for index, event in events.iterrows():
-            if event['sequenceId'].split('_')[1] == team:
-                meetings.append(event['sequenceId'].split('_')[0])
-        meetings = list(set(meetings))
-        meetings.sort()
+def get_meetings_for_team(database, group_by, team):
+    events, entities, teams, behaviours, meetings = read_files(database)
+    meetings = []
 
-    else:
+    if team is None:
+        meetings.append('All')
+    elif team == 'All':
         meetings = events['sequenceId'].unique()
         meetings = [meeting.split('_')[0] for meeting in meetings]
         meetings = list(set(meetings))
         meetings.sort()
-        meetings.append('All')
+        meetings.insert(0, 'All')
+    elif any(char.isdigit() for char in team):
+        # Get events where sequenceId contains team
+        events = events[events['sequenceId'].str.split('_').str[1] == team]
+        meetings = events['sequenceId'].unique()
+        meetings = [meeting.split('_')[0] for meeting in meetings]
+
+        meetings = list(set(meetings))
+        meetings.sort()
+        meetings.insert(0, 'All')
+    else: # Team is a group (variable values control, feedback, etc.)
+        team_list= read_teams_from_file(database, group_by, team)
+        # Get events where sequenceId contains team
+        events = events[events['sequenceId'].str.split('_').str[1].isin(team_list)]
+        meetings = events['sequenceId'].unique()
+        meetings = [meeting.split('_')[0] for meeting in meetings]
+
+        meetings = list(set(meetings))
+        meetings.sort()
+        meetings.insert(0, 'All')
 
     options = [
         {'label': name.capitalize(), 'value': name}
         for name in meetings
     ]
     return options
+
+def get_teams_for_group(database, variable):
+    if variable == 'Teams':
+        return get_teams_for_database(database)
+    else:
+        return read_team_groups_from_file(database, variable)
+
+def read_team_groups_from_file(database, variable):
+    with open(database + '/' + variable_separation_file, 'r') as file:
+        lines = file.readlines()
+
+    is_variable = False
+    names = []
+    for line in lines:
+        if 'Attribute' in line:
+            if variable in line:
+                is_variable = True
+            else:
+                is_variable = False
+        if is_variable:
+            if line.startswith('ids'):
+                names.append(line.split(':')[1].strip())
+    options = [
+        {'label': name, 'value': name}
+        for name in names
+    ]
+    return options
+
+def read_teams_from_file(database, variable, group_name):
+    with open(database + '/' + variable_separation_file, 'r') as file:
+        lines = file.readlines()
+    is_variable = False
+    is_group = False
+    teams = []
+    for line in lines:
+        if 'Attribute' in line:
+            if variable in line:
+                is_variable = True
+            else:
+                is_variable = False
+            continue
+        if is_variable:
+            if group_name in line:
+                is_group = True
+                continue
+        if is_group:
+            teams = line.split(',')
+            teams = [team for team in teams if team != 'NA\n']
+            teams = [team.split('_')[1].strip() for team in teams]
+            break
+    return teams
 
 def check_valid_options(node_type, colour_type, team):
     if node_type == 'Behaviours':
