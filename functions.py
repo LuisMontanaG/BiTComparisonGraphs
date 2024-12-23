@@ -46,7 +46,7 @@ def load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2,
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
     node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, node_signs, node_stats = get_node_data_diff(node_data_list, node_type)
-    edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs, edge_stats = get_edge_data_diff(edge_data_list, edge_type)
+    edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs, edge_stats = get_edge_data_diff(edge_data_list, edge_type, normalise)
     colors = get_colors(node_names, behaviours_1, colour_type)
     selector_node_classes, selector_edge_classes = get_selector_classes_comparison(node_names, behaviours_1, colors, node_size_map, edge_size_map, colour_type)
     node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type)
@@ -314,7 +314,7 @@ def get_participant_edge_data(edge_type, events, team, meeting, entity_list, nor
         edge_data = [(key[0], key[1], key[2], value, int(round((value / 100) * source_sum[key[0]]))) for key, value in edges.items()]
     return edge_data
 
-def get_edge_data_diff(edge_data_list, edge_type):
+def get_edge_data_diff(edge_data_list, edge_type, normalise):
     edge_data = []
     # Append all the edge data to a list
 
@@ -351,23 +351,30 @@ def get_edge_data_diff(edge_data_list, edge_type):
         edge_data_diff[key] = (edge_data[1][key][0] - edge_data[0][key][0], edge_data[1][key][1] - edge_data[0][key][1])
 
     # Remove edges with weight 0
-    edge_data_diff = {key: value for key, value in edge_data_diff.items() if value[0] != 0}
+    edge_data_diff = {key: value for key, value in edge_data_diff.items() if value[1] != 0}
 
-    # Get additional stats for each node if team and/or meeting = 'All'
+    # Get additional stats for each edge if team and/or meeting = 'All'
     stats = {}
     for name in list(edge_data_diff.keys()):
         stats[name] = ''
-    # Remove third element from the key
+    # Remove third element (behaviour) from the key
     stats = {(key[0], key[1]): value for key, value in stats.items()}
 
     # Dictionary of signs (positive or negative) for each weight
-    signs = {key: value[0] / abs(value[0]) for key, value in edge_data_diff.items()}
+    signs = {key: value[1] / abs(value[1]) for key, value in edge_data_diff.items()}
     # Change -1 for "negative" and 1 for "positive" and 0 for "" in signs
     signs = {key: "negative" if sign == -1 else "positive" if sign == 1 else "" for key, sign in signs.items()}
-    # Change the sign of the weights to positive
-    edge_data_diff = {key: (abs(value[0]), abs(value[0])) for key, value in edge_data_diff.items()}
-    # Keep the original weights
-    edge_data_diff = {key: value[0] for key, value in edge_data_diff.items()}
+
+    if not normalise:
+        # Change the sign of the weights to positive
+        edge_data_diff = {key: (abs(value[1]), abs(value[1])) for key, value in edge_data_diff.items()}
+        # Keep the original weights
+        edge_data_diff = {key: value[1] for key, value in edge_data_diff.items()}
+    else:
+        # Change the sign of the weights to positive
+        edge_data_diff = {key: (abs(value[0]), value[0]) for key, value in edge_data_diff.items()}
+        # Keep the normalised weights
+        edge_data_diff = {key: value[0] for key, value in edge_data_diff.items()}
 
     if edge_type == 'Probability':
         source_sum = {}

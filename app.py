@@ -78,7 +78,7 @@ layout_dropdown = html.Div([
             {'label': name.capitalize(), 'value': name}
             for name in ['grid', 'random', 'circle', 'cose', 'concentric']
         ],
-        style={'width': '200px'},
+        style={'width': '150px'},
         className='dash-bootstrap'
     )
 ], style = {'display': 'inline-block', 'margin-left': '20px'})
@@ -93,7 +93,7 @@ group_dropdown = html.Div([
             {'label': name, 'value': name}
             for name in ['Teams', 'teammark', 'airtime_evenness', 'psy_safe', 'expgroup']
         ],
-        style={'width': '200px'},
+        style={'width': '150px'},
         className='dash-bootstrap'
     )
 ], style = {'display': 'inline-block', 'margin-left': '20px'})
@@ -194,11 +194,11 @@ meeting_2_dropdown = html.Div([
     style = {'display': 'inline-block', 'margin-left': '20px'}
 )
 
-node_type_radio = html.Div([html.P("Node type:", style = {'display': 'inline-block'}),
+node_type_radio = html.Div([html.P("Node:", style = {'display': 'inline-block'}),
     html.Div(dcc.RadioItems(['Behaviours', 'Participants'], id='radio-update-nodes', value='Behaviours', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
 ], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
 
-edge_type_radio = html.Div([html.P("Edge weight:", style = {'display': 'inline-block'}),
+edge_type_radio = html.Div([html.P("Edge:", style = {'display': 'inline-block'}),
     html.Div(dcc.RadioItems(['Frequency', 'Probability'], id='radio-update-edges', value='Frequency', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
 ], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
 
@@ -214,7 +214,7 @@ show_edge_options_radio = html.Div([html.P("Show edges:", style = {'display': 'i
     html.Div(dcc.RadioItems(['All', 'Positive', 'Negative'], id='radio-update-edge-options', value='All', inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'}), style={'display': 'inline-block'})
 ], style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
 
-normalise_checkbox = html.Div([dcc.Checklist(['Normalise frequency'], id='checkbox-update-normalise', value=['Normalise frequency'], inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'})],
+normalise_checkbox = html.Div([dcc.Checklist(['Normalise'], id='checkbox-update-normalise', value=['Normalise'], inline=True, inputStyle={'margin-right': '10px', 'margin-left': '10px'})],
                               style={'margin-left': '20px', 'margin-top': '20px', 'display': 'inline-block'})
 
 update_button = html.Div([
@@ -275,7 +275,7 @@ def mouseover_node_data(hover_node_data, hover_edge_data):
         elif text_input == 'Edge':
             if node_type == 'Behaviours':
                 if edge_type == 'Frequency':
-                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " " + hover_edge_data['stats']
+                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
                 else:
                     return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats']
             else:
@@ -447,7 +447,7 @@ def update_graph_with_meeting_compare(value):
 @callback(Input('checkbox-update-normalise', 'value'), prevent_initial_call=True)
 def update_normalise(value):
     global normalise
-    if 'Normalise frequency' in value:
+    if 'Normalise' in value:
         normalise = True
     else:
         normalise = False
