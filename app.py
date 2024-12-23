@@ -324,8 +324,8 @@ tooltip = html.Div([
     html.P(id='tooltip')
 ], style={'margin-left': '10px'})
 
-graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip])
-
+#graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip])
+graph_tab = normalise_checkbox
 app.layout = graph_tab
 
 @callback(
