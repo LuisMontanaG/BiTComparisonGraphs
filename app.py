@@ -353,6 +353,19 @@ app.layout = graph_tab
 #                 else:
 #                     return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats']
 #
+app.clientside_callback(
+    """
+    function(hover_node_data) {
+        if (hover_node_data) {
+            return hover_node_data['id'] + ", with frequency: " + hover_node_data['freq'] + " " + hover_node_data['stats'];
+        }
+    }
+    """,
+    Output('tooltip', 'children'),
+    Input('BiT', 'mouseoverNodeData'),
+    prevent_initial_call=True
+)
+
 # @callback(Output('BiT', 'elements', allow_duplicate=True),
 #             Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
 # def select_node(selected_nodes):
@@ -380,17 +393,17 @@ app.layout = graph_tab
 #     }
 
 # Convert to client-side callback
-app.clientside_callback(
-    """
-    function(layout) {
-        style = {
-            'name': layout
-        };
-        return style;
-    """,
-    Output('BiT', 'layout'),
-    [Input('dropdown-update-layout', 'value')]
-)
+# app.clientside_callback(
+#     """
+#     function(layout) {
+#         style = {
+#             'name': layout
+#         };
+#         return style;
+#     """,
+#     Output('BiT', 'layout'),
+#     [Input('dropdown-update-layout', 'value')]
+# )
 
 # @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
 #         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
@@ -556,4 +569,4 @@ app.clientside_callback(
 #         raise PreventUpdate
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
