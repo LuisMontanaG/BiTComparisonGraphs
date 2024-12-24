@@ -12,7 +12,7 @@ run_app:
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/async-dropdown.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/async-slider.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/dash_core_components-shared.js
-	wget -r http://127.0.0.1:8050/_dash-component-suites/dash_cytoscape/dash_cytoscape.dev.js
+	#wget -r http://127.0.0.1:8050/_dash-component-suites/dash_cytoscape/dash_cytoscape.dev.js
 
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dash_table/async-table.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dash_table/async-highlight.js
