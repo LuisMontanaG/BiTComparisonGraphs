@@ -542,4 +542,4 @@ app.layout = graph_tab
 #         raise PreventUpdate
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run_server(debug=False)
