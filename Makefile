@@ -18,6 +18,9 @@ run_app:
 
 	wget -r http://127.0.0.1:8050/_dash-component-suites/plotly/package_data/plotly.min.js
 
+	wget -r http://127.0.0.1:8050/assets/style.css
+	wget -r http://127.0.0.1:8050/dash_cytoscape.dev.js
+
 	mv 127.0.0.1:8050 pages_files
 
 	find pages_files -exec sed -i.bak 's|_dash-component-suites|BiTComparisonGraphs\\/_dash-component-suites|g' {} \;
