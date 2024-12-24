@@ -370,13 +370,27 @@ def select_node(selected_nodes):
                         current_edges.append(edge)
         return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 
-@callback(Output('BiT', 'layout'),
-              Input('dropdown-update-layout', 'value'))
-def update_layout(layout):
-    return {
-        'name': layout,
-        #'animate': True
-    }
+
+# @callback(Output('BiT', 'layout'),
+#               Input('dropdown-update-layout', 'value'))
+# def update_layout(layout):
+#     return {
+#         'name': layout,
+#         #'animate': True
+#     }
+
+# Convert to client-side callback
+app.clientside_callback(
+    """
+    function(layout) {
+        return {
+            'name': layout,
+            //'animate': true
+        };
+    """,
+    Output('BiT', 'layout'),
+    [Input('dropdown-update-layout', 'value')]
+)
 
 @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
