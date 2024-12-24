@@ -29,6 +29,7 @@ run_app:
 	find pages_files -exec sed -i.bak 's|_reload-hash|BiTComparisonGraphs/_reload-hash|g' {} \;
 	find pages_files -exec sed -i.bak 's|_dash-update-component|BiTComparisonGraphs/_dash-update-component|g' {} \;
 	find pages_files -exec sed -i.bak 's|assets|BiTComparisonGraphs/assets|g' {} \;
+	find pages_files -exec sed -i.bak 's|dash_cytoscape|BiTComparisonGraphs/dash_cytoscape|g' {} \;
 
 	mv pages_files/_dash-layout pages_files/_dash-layout.json
 	mv pages_files/_dash-dependencies pages_files/_dash-dependencies.json
