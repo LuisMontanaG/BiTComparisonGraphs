@@ -12,7 +12,7 @@ run_app:
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/async-dropdown.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/async-slider.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dcc/dash_core_components-shared.js
-	wget -r http://127.0.0.1:8050/_dash-component-suites/dash_cytoscape/dash_cytoscape.js
+	wget -r http://127.0.0.1:8050/_dash-component-suites/dash_cytoscape/dash_cytoscape.dev.js
 
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dash_table/async-table.js
 	wget -r http://127.0.0.1:8050/_dash-component-suites/dash/dash_table/async-highlight.js
@@ -22,6 +22,8 @@ run_app:
 	wget -r http://127.0.0.1:8050/assets/style.css
 
 	mv 127.0.0.1:8050 pages_files
+	ls -a pages_files
+	ls -a pages_files/assets
 
 	find pages_files -exec sed -i.bak 's|_dash-component-suites|BiTComparisonGraphs\\/_dash-component-suites|g' {} \;
 	find pages_files -exec sed -i.bak 's|_dash-layout|BiTComparisonGraphs/_dash-layout.json|g' {} \;
@@ -34,7 +36,7 @@ run_app:
 	mv pages_files/_dash-dependencies pages_files/_dash-dependencies.json
 	mv assets/* pages_files/assets/
 
-	ps | grep python | awk '{print $$1}' | xargs kill -9	
+	ps -C python -o pid= | xargs kill -9
 
 clean_dirs:
 	ls
