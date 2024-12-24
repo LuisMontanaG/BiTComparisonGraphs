@@ -295,7 +295,7 @@ options_div = html.Div([node_type_radio, edge_type_radio, colour_type_radio, col
 
 graph = html.Div([cyto.Cytoscape(
         id='BiT',
-        layout={'name': 'circle',
+        layout={'name': 'grid',
                 'radius': 200},
         elements = edges+nodes,
         stylesheet = selector_node_classes + selector_edge_classes + default_stylesheet,
@@ -327,48 +327,48 @@ tooltip = html.Div([
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip])
 app.layout = graph_tab
 
-@callback(
-        Output('tooltip', 'children'),
-        [Input('BiT', 'mouseoverNodeData'),
-        Input('BiT', 'mouseoverEdgeData')])
-def mouseover_node_data(hover_node_data, hover_edge_data):
-    if hover_node_data or hover_edge_data:
-        component = list(ctx.triggered_prop_ids.keys())[0]
-        text_input = ""
-        if 'Node' in component:
-            text_input = 'Node'
-        if 'Edge' in component:
-            text_input = 'Edge'
-        if text_input == 'Node':
-            return hover_node_data['id'] + ", with frequency: " + str(round(float(hover_node_data['freq']), 3)) + " " + hover_node_data['stats']
-        elif text_input == 'Edge':
-            if node_type == 'Behaviours':
-                if edge_type == 'Frequency':
-                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
-                else:
-                    return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats']
-            else:
-                if edge_type == 'Frequency':
-                    return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
-                else:
-                    return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats']
-
-@callback(Output('BiT', 'elements', allow_duplicate=True),
-            Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
-def select_node(selected_nodes):
-    if len(selected_nodes) == 0:
-        return get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats) + get_original_nodes(node_data, node_type, node_signs,colour_type, node_stats)
-    else:
-        current_edges = []
-        for node in selected_nodes:
-            for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-                if colour_source == 'Source':
-                    if edge['data']['source'] == node['id']:
-                        current_edges.append(edge)
-                else:
-                    if edge['data']['target'] == node['id']:
-                        current_edges.append(edge)
-        return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+# @callback(
+#         Output('tooltip', 'children'),
+#         [Input('BiT', 'mouseoverNodeData'),
+#         Input('BiT', 'mouseoverEdgeData')])
+# def mouseover_node_data(hover_node_data, hover_edge_data):
+#     if hover_node_data or hover_edge_data:
+#         component = list(ctx.triggered_prop_ids.keys())[0]
+#         text_input = ""
+#         if 'Node' in component:
+#             text_input = 'Node'
+#         if 'Edge' in component:
+#             text_input = 'Edge'
+#         if text_input == 'Node':
+#             return hover_node_data['id'] + ", with frequency: " + str(round(float(hover_node_data['freq']), 3)) + " " + hover_node_data['stats']
+#         elif text_input == 'Edge':
+#             if node_type == 'Behaviours':
+#                 if edge_type == 'Frequency':
+#                     return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
+#                 else:
+#                     return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats']
+#             else:
+#                 if edge_type == 'Frequency':
+#                     return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
+#                 else:
+#                     return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats']
+#
+# @callback(Output('BiT', 'elements', allow_duplicate=True),
+#             Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
+# def select_node(selected_nodes):
+#     if len(selected_nodes) == 0:
+#         return get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats) + get_original_nodes(node_data, node_type, node_signs,colour_type, node_stats)
+#     else:
+#         current_edges = []
+#         for node in selected_nodes:
+#             for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+#                 if colour_source == 'Source':
+#                     if edge['data']['source'] == node['id']:
+#                         current_edges.append(edge)
+#                 else:
+#                     if edge['data']['target'] == node['id']:
+#                         current_edges.append(edge)
+#         return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 
 
 # @callback(Output('BiT', 'layout'),
@@ -383,177 +383,177 @@ def select_node(selected_nodes):
 app.clientside_callback(
     """
     function(layout) {
-        return {
-            'name': layout,
-            //'animate': true
+        style = {
+            'name': layout
         };
+        return style;
     """,
     Output('BiT', 'layout'),
     [Input('dropdown-update-layout', 'value')]
 )
 
-@callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
-        Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
-    Input('dropdown-update-group', 'value'),
-    prevent_initial_call=True)
-def update_group(value):
-    global group_by
-    group_by = value
-    return get_teams_for_group(database_1, value), get_teams_for_group(database_2, value)
-
-@callback(Output('dropdown-update-team', 'options'),
-Input('dropdown-update-database', 'value'),prevent_initial_call=True)
-def update_database(value):
-    global database_1
-    database_1 = value
-    return get_teams_for_group(value, group_by)
-
-@callback(Output('dropdown-update-team-compare', 'options'),
-Input('dropdown-update-database-compare', 'value'),prevent_initial_call=True)
-def update_database(value):
-    global database_2
-    database_2 = value
-    return get_teams_for_group(value, group_by)
-
-@callback(
-    [Output('BiT', 'elements'),
-    Output('weight-slider-output', 'children')],
-    Input('weight-slider', 'value'))
-def update_graph(selected_weight):
-    global nodes, edges
-    if selected_weight == min_weight:
-        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-        edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
-        return edges + nodes, "Weight threshold: " + str(selected_weight)
-    else:
-        # Remove edges with weight less than selected_weight
-        current_edges = []
-        for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-            if show_edges == 'All':
-                if edge_type == 'Probability':
-                    if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-                        current_edges.append(edge)
-                else:
-                    if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-                        current_edges.append(edge)
-            else:
-                if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
-                    if edge_type == 'Probability':
-                        if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-                            current_edges.append(edge)
-                    else:
-                        if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-                            current_edges.append(edge)
-        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-        edges = current_edges
-        # Format selected_weight to display only 2 decimal places
-        return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
-
-@callback(Input('radio-update-nodes', 'value'),
-    prevent_initial_call=True)
-def update_team(value):
-    global node_type
-    node_type = value
-
-@callback(Input('radio-update-edges', 'value'),
-    prevent_initial_call=True)
-def update_edge_weight(value):
-    global edge_type
-    edge_type = value
-
-@callback(Input('radio-update-colour_type', 'value'),
-    prevent_initial_call=True)
-def update_colour_type(value):
-    global colour_type
-    colour_type = value
-
-@callback(Input('radio-update-colour-source', 'value'),
-    prevent_initial_call=True)
-def update_colour_source(value):
-    global colour_source
-    colour_source = value
-
-@callback(Output('BiT', 'elements', allow_duplicate=True),
-    Input('radio-update-edge-options', 'value'),
-    prevent_initial_call=True)
-def update_show_edges(value):
-    global show_edges
-    show_edges = value
-    global nodes, edges
-    if value == 'All':
-        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-        edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
-        return edges + nodes
-    else:
-        # Remove edges with weight less than selected_weight
-        current_edges = []
-        for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-            if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == value.lower():
-                current_edges.append(edge)
-        nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-        edges = current_edges
-        return edges + nodes
-
-@callback(
-    [Output('dropdown-update-meeting', 'options')],
-    Input('dropdown-update-team', 'value'), prevent_initial_call=True)
-def update_meeting_display(value):
-    if value != '':
-        global team_1
-        team_1 = value
-        return [get_meetings_for_team(database_1, group_by, value)]
-    else:
-        return [[]]
-
-@callback([Output('dropdown-update-meeting-compare', 'options')],
-            Input('dropdown-update-team-compare', 'value'), prevent_initial_call=True)
-def update_meeting_display_compare(value):
-    if value != '':
-        global team_2
-        team_2 = value
-        return [get_meetings_for_team(database_2, group_by, value)]
-    else:
-        return [[]]
-
-@callback(Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
-def update_graph_with_meeting(value):
-    global meeting_1
-    if value is not None:
-        meeting_1 = value
-
-@callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
-def update_graph_with_meeting_compare(value):
-    global meeting_2
-    if value is not None:
-        meeting_2 = value
-
-@callback(Input('checkbox-update-normalise', 'value'), prevent_initial_call=True)
-def update_normalise(value):
-    global normalise
-    if 'Normalise' in value:
-        normalise = True
-    else:
-        normalise = False
-
-@callback([Output('BiT', 'elements', allow_duplicate=True),
-             Output('BiT', 'stylesheet'),
-             Output('weight-slider', 'min'),
-             Output('weight-slider', 'max'),
-             Output('weight-slider', 'marks'),
-             Output('weight-slider', 'value'),
-           Output('BiT2', 'elements', allow_duplicate=True),
-           Output('BiT2', 'stylesheet'),],
-            Input('update-button', 'n_clicks'),
-            prevent_initial_call=True)
-def update_graph_with_button(n_clicks):
-    global teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
-    valid = check_valid_options(node_type, colour_type, team_1)
-    if valid:
-        teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(
-        group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
-        return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
-    else:
-        raise PreventUpdate
+# @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
+#         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
+#     Input('dropdown-update-group', 'value'),
+#     prevent_initial_call=True)
+# def update_group(value):
+#     global group_by
+#     group_by = value
+#     return get_teams_for_group(database_1, value), get_teams_for_group(database_2, value)
+#
+# @callback(Output('dropdown-update-team', 'options'),
+# Input('dropdown-update-database', 'value'),prevent_initial_call=True)
+# def update_database(value):
+#     global database_1
+#     database_1 = value
+#     return get_teams_for_group(value, group_by)
+#
+# @callback(Output('dropdown-update-team-compare', 'options'),
+# Input('dropdown-update-database-compare', 'value'),prevent_initial_call=True)
+# def update_database(value):
+#     global database_2
+#     database_2 = value
+#     return get_teams_for_group(value, group_by)
+#
+# @callback(
+#     [Output('BiT', 'elements'),
+#     Output('weight-slider-output', 'children')],
+#     Input('weight-slider', 'value'))
+# def update_graph(selected_weight):
+#     global nodes, edges
+#     if selected_weight == min_weight:
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
+#         return edges + nodes, "Weight threshold: " + str(selected_weight)
+#     else:
+#         # Remove edges with weight less than selected_weight
+#         current_edges = []
+#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+#             if show_edges == 'All':
+#                 if edge_type == 'Probability':
+#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                         current_edges.append(edge)
+#                 else:
+#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                         current_edges.append(edge)
+#             else:
+#                 if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
+#                     if edge_type == 'Probability':
+#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                             current_edges.append(edge)
+#                     else:
+#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                             current_edges.append(edge)
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = current_edges
+#         # Format selected_weight to display only 2 decimal places
+#         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
+#
+# @callback(Input('radio-update-nodes', 'value'),
+#     prevent_initial_call=True)
+# def update_team(value):
+#     global node_type
+#     node_type = value
+#
+# @callback(Input('radio-update-edges', 'value'),
+#     prevent_initial_call=True)
+# def update_edge_weight(value):
+#     global edge_type
+#     edge_type = value
+#
+# @callback(Input('radio-update-colour_type', 'value'),
+#     prevent_initial_call=True)
+# def update_colour_type(value):
+#     global colour_type
+#     colour_type = value
+#
+# @callback(Input('radio-update-colour-source', 'value'),
+#     prevent_initial_call=True)
+# def update_colour_source(value):
+#     global colour_source
+#     colour_source = value
+#
+# @callback(Output('BiT', 'elements', allow_duplicate=True),
+#     Input('radio-update-edge-options', 'value'),
+#     prevent_initial_call=True)
+# def update_show_edges(value):
+#     global show_edges
+#     show_edges = value
+#     global nodes, edges
+#     if value == 'All':
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
+#         return edges + nodes
+#     else:
+#         # Remove edges with weight less than selected_weight
+#         current_edges = []
+#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+#             if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == value.lower():
+#                 current_edges.append(edge)
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = current_edges
+#         return edges + nodes
+#
+# @callback(
+#     [Output('dropdown-update-meeting', 'options')],
+#     Input('dropdown-update-team', 'value'), prevent_initial_call=True)
+# def update_meeting_display(value):
+#     if value != '':
+#         global team_1
+#         team_1 = value
+#         return [get_meetings_for_team(database_1, group_by, value)]
+#     else:
+#         return [[]]
+#
+# @callback([Output('dropdown-update-meeting-compare', 'options')],
+#             Input('dropdown-update-team-compare', 'value'), prevent_initial_call=True)
+# def update_meeting_display_compare(value):
+#     if value != '':
+#         global team_2
+#         team_2 = value
+#         return [get_meetings_for_team(database_2, group_by, value)]
+#     else:
+#         return [[]]
+#
+# @callback(Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
+# def update_graph_with_meeting(value):
+#     global meeting_1
+#     if value is not None:
+#         meeting_1 = value
+#
+# @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
+# def update_graph_with_meeting_compare(value):
+#     global meeting_2
+#     if value is not None:
+#         meeting_2 = value
+#
+# @callback(Input('checkbox-update-normalise', 'value'), prevent_initial_call=True)
+# def update_normalise(value):
+#     global normalise
+#     if 'Normalise' in value:
+#         normalise = True
+#     else:
+#         normalise = False
+#
+# @callback([Output('BiT', 'elements', allow_duplicate=True),
+#              Output('BiT', 'stylesheet'),
+#              Output('weight-slider', 'min'),
+#              Output('weight-slider', 'max'),
+#              Output('weight-slider', 'marks'),
+#              Output('weight-slider', 'value'),
+#            Output('BiT2', 'elements', allow_duplicate=True),
+#            Output('BiT2', 'stylesheet'),],
+#             Input('update-button', 'n_clicks'),
+#             prevent_initial_call=True)
+# def update_graph_with_button(n_clicks):
+#     global teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
+#     valid = check_valid_options(node_type, colour_type, team_1)
+#     if valid:
+#         teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(
+#         group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
+#         return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
+#     else:
+#         raise PreventUpdate
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)
