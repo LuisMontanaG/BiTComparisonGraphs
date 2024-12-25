@@ -302,7 +302,7 @@ app.clientside_callback(
     Output('tooltip', 'children', allow_duplicate=True),
     [Input('BiT', 'mouseoverEdgeData'),
      Input('node_type', 'data'),
-     Input('meeting_1', 'data')],
+     Input('edge_type', 'data')],
     prevent_initial_call=True
 )
 
