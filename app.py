@@ -532,12 +532,16 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-@callback(Output('meeting_2', 'data'),
-    Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
-def update_graph_with_meeting(value):
-    if value is not None:
-        return value
-
+app.clientside_callback(
+    """
+    function(value) {
+        return value;
+    }
+    """,
+    Output('meeting_2', 'data'),
+    [Input('dropdown-update-meeting-compare', 'value')],
+    prevent_initial_call=True
+)
 
 # @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
 # def update_graph_with_meeting_compare(value):
