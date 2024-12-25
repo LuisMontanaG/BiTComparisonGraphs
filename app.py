@@ -261,10 +261,11 @@ show_edges_dcc = dcc.Store(id='show_edges', data='All')
 normalise_dcc = dcc.Store(id='normalise', data=True)
 
 meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
+meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                       node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                      meeting_1_dcc])
+                      meeting_1_dcc, meeting_2_dcc])
 app.layout = graph_tab
 
 app.clientside_callback(
@@ -303,7 +304,7 @@ app.clientside_callback(
     Output('tooltip', 'children', allow_duplicate=True),
     [Input('BiT', 'mouseoverEdgeData'),
      State('node_type', 'data'),
-     State('meeting_1', 'data')],
+     State('meeting_2', 'data')],
     prevent_initial_call=True
 )
 
@@ -520,7 +521,6 @@ app.clientside_callback(
 #     if value is not None:
 #         return value
 
-# Convert to client-side callback
 app.clientside_callback(
     """
     function(value) {
@@ -531,6 +531,13 @@ app.clientside_callback(
     [Input('dropdown-update-meeting', 'value')],
     prevent_initial_call=True
 )
+
+@callback(Output('meeting_2', 'data'),
+    Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
+def update_graph_with_meeting(value):
+    if value is not None:
+        return value
+
 
 # @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
 # def update_graph_with_meeting_compare(value):
