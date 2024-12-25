@@ -334,16 +334,18 @@ app.clientside_callback(
 #         #'animate': True
 #     }
 
-# Convert to client-side callback
-# app.clientside_callback(
-#     """
-#     function(value) {
-#         return value;
-#     """,
-#     Output('tooltip', 'children', allow_duplicate=True),
-#     Input('dropdown-update-layout', 'value'),
-#     prevent_initial_call=True
-# )
+app.clientside_callback(
+    """
+    function(value) {
+        return {
+            'name': value
+        }
+    }
+    """,
+    Output('BiT', 'layout'),
+    [Input('dropdown-update-layout', 'value')],
+    prevent_initial_call=True
+)
 
 # @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
 #         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
@@ -446,6 +448,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# TODO: Hide/show edges based on radio button
 app.clientside_callback(
     """
     function(show_edges) {
@@ -456,23 +459,6 @@ app.clientside_callback(
     [Input('radio-update-edge-options', 'value')],
     prevent_initial_call=True
 )
-
-app.clientside_callback(
-    """
-    function(normalise) {
-        if (normalise.includes('Normalise')) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    """,
-    Output('normalise', 'data'),
-    [Input('checkbox-update-normalise', 'value')],
-    prevent_initial_call=True
-)
-
 # @callback(Output('BiT', 'elements', allow_duplicate=True),
 #     Input('radio-update-edge-options', 'value'),
 #     prevent_initial_call=True)
@@ -493,7 +479,23 @@ app.clientside_callback(
 #         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 #         edges = current_edges
 #         return edges + nodes
-#
+
+app.clientside_callback(
+    """
+    function(normalise) {
+        if (normalise.includes('Normalise')) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    """,
+    Output('normalise', 'data'),
+    [Input('checkbox-update-normalise', 'value')],
+    prevent_initial_call=True
+)
+
 # @callback(
 #     [Output('dropdown-update-meeting', 'options')],
 #     Input('dropdown-update-team', 'value'), prevent_initial_call=True)
@@ -514,12 +516,6 @@ app.clientside_callback(
 #         return [get_meetings_for_team(database_2, group_by, value)]
 #     else:
 #         return [[]]
-
-# @callback(Output('meeting_1', 'data'),
-#     Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
-# def update_graph_with_meeting(value):
-#     if value is not None:
-#         return value
 
 app.clientside_callback(
     """
@@ -543,12 +539,6 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
-# def update_graph_with_meeting_compare(value):
-#     global meeting_2
-#     if value is not None:
-#         meeting_2 = value
-#
 # @callback([Output('BiT', 'elements', allow_duplicate=True),
 #              Output('BiT', 'stylesheet'),
 #              Output('weight-slider', 'min'),
