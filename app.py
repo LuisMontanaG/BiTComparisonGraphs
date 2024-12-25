@@ -302,8 +302,8 @@ app.clientside_callback(
     """,
     Output('tooltip', 'children', allow_duplicate=True),
     [Input('BiT', 'mouseoverEdgeData'),
-     Input('node_type', 'data'),
-     Input('edge_type', 'data')],
+     State('node_type', 'data'),
+     State('edge_type', 'data')],
     prevent_initial_call=True
 )
 
