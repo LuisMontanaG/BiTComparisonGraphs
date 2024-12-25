@@ -281,7 +281,6 @@ app.clientside_callback(
 app.clientside_callback(
     """
     function(hover_edge_data, node_type, edge_type) {
-        return edge_type;
         if (node_type == 'Behaviours') {
             if (edge_type == 'Frequency') {
                 return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4) + " " + hover_edge_data['stats'];
