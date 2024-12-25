@@ -513,13 +513,13 @@ app.clientside_callback(
 #         return [get_meetings_for_team(database_2, group_by, value)]
 #     else:
 #         return [[]]
-#
-# @callback(Output('meeting_1', 'data'),
-#     Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
-# def update_graph_with_meeting(value):
-#     if value is not None:
-#         return value
-#
+
+@callback(Output('meeting_1', 'data'),
+    Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
+def update_graph_with_meeting(value):
+    if value is not None:
+        return value
+
 # @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
 # def update_graph_with_meeting_compare(value):
 #     global meeting_2
