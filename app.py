@@ -334,15 +334,15 @@ app.clientside_callback(
 #     }
 
 # Convert to client-side callback
-app.clientside_callback(
-    """
-    function(value) {
-        return value;
-    """,
-    Output('tooltip', 'children', allow_duplicate=True),
-    Input('dropdown-update-layout', 'value'),
-    prevent_initial_call=True
-)
+# app.clientside_callback(
+#     """
+#     function(value) {
+#         return value;
+#     """,
+#     Output('tooltip', 'children', allow_duplicate=True),
+#     Input('dropdown-update-layout', 'value'),
+#     prevent_initial_call=True
+# )
 
 # @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
 #         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
