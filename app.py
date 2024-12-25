@@ -547,4 +547,4 @@ def update_graph_with_meeting(value):
 #         raise PreventUpdate
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run_server(debug=False)
