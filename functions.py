@@ -49,7 +49,7 @@ def load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2,
     edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs, edge_stats = get_edge_data_diff(edge_data_list, edge_type, normalise)
     colors = get_colors(node_names, behaviours_1, colour_type)
     selector_node_classes, selector_edge_classes = get_selector_classes_comparison(node_names, behaviours_1, colors, node_size_map, edge_size_map, colour_type)
-    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type)
+    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type, node_stats)
     if node_type == 'Behaviours':
         edges = get_behaviour_edges_comparison(edge_data, colour_source, edge_signs)
     else:
@@ -357,8 +357,6 @@ def get_edge_data_diff(edge_data_list, edge_type, normalise):
     stats = {}
     for name in list(edge_data_diff.keys()):
         stats[name] = ''
-    # Remove third element (behaviour) from the key
-    stats = {(key[0], key[1]): value for key, value in stats.items()}
 
     # Dictionary of signs (positive or negative) for each weight
     signs = {key: value[1] / abs(value[1]) for key, value in edge_data_diff.items()}
@@ -529,7 +527,7 @@ def get_selector_classes_comparison(node_names, behaviours, colors, node_size_ma
         )
     return selector_node_classes, selector_edge_classes
 
-def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type):
+def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type, stats):
     # Create a list of random longitudes and latitudes with the size of the number of acronyms
     longitudes = np.random.uniform(-180, 180, len(acronyms))
     latitudes = np.random.uniform(-90, 90, len(acronyms))
@@ -539,7 +537,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
     if node_type == 'Behaviours':
         nodes = [
             {
-                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': ''},
+                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
                 'position': {'x': 20 * lat, 'y': -20 * long},
                 'classes': "node" + short
             }
@@ -549,7 +547,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
         if colour_type == 'Behaviours':
             nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': ''},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "nodeParticipant"
                 }
@@ -558,7 +556,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
         else:
             nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': ''},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "node" + short
                 }

@@ -1,77 +1,6 @@
-# import dash
-# from dash import dcc, html
-# from dash.dependencies import Input, Output
-# import numpy as np
-#
-# # Initialize the Dash app
-# app = dash.Dash(__name__)
-#
-# # Sample data
-# categories = ['A', 'B', 'C', 'D']
-# values1 = np.random.randint(10, 100, size=4)
-# values2 = np.random.randint(10, 100, size=4)
-#
-# # App layout
-# app.layout = html.Div([
-#     dcc.Graph(id='bar-chart'),
-#     dcc.Dropdown(
-#         id='chart-type-dropdown',
-#         options=[
-#             {'label': 'Grouped', 'value': 'group'},
-#             {'label': 'Stacked', 'value': 'stack'}
-#         ],
-#         value='group',  # Default value
-#         clearable=False,
-#         style={'width': '50%'}
-#     ),
-#     dcc.Store(id='bar-data', data={'categories': categories, 'values1': list(values1), 'values2': list(values2)})
-# ])
-#
-# # Client-side callback (JavaScript function)
-# app.clientside_callback(
-#     """
-#     function(chartType, data) {
-#         var categories = data.categories;
-#         var values1 = data.values1;
-#         var values2 = data.values2;
-#
-#         var barmode = chartType === 'stack' ? 'stack' : 'group';
-#
-#         return {
-#             'data': [
-#                 {
-#                     'x': categories,
-#                     'y': values1,
-#                     'type': 'bar',
-#                     'name': 'Series 1'
-#                 },
-#                 {
-#                     'x': categories,
-#                     'y': values2,
-#                     'type': 'bar',
-#                     'name': 'Series 2'
-#                 }
-#             ],
-#             'layout': {
-#                 'title': `Bar Chart (${chartType === 'stack' ? 'Stacked' : 'Grouped'})`,
-#                 'barmode': barmode
-#             }
-#         };
-#     }
-#     """,
-#     Output('bar-chart', 'figure'),
-#     [Input('chart-type-dropdown', 'value')],
-#     [Input('bar-data', 'data')]
-# )
-#
-# # Run the app
-# if __name__ == '__main__':
-#     app.run_server(debug=False)
-
-from dash import Dash, html, Input, Output, callback, dcc, ctx
+from dash import Dash, html, Input, Output, callback, dcc, ctx, State
 import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
-from dash.exceptions import PreventUpdate
 
 from functions import *
 
@@ -324,45 +253,57 @@ tooltip = html.Div([
     html.P(id='tooltip')
 ], style={'margin-left': '10px'})
 
-graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip])
+node_type_dcc = dcc.Store(id='node_type', data='Behaviours')
+edge_type_dcc = dcc.Store(id='edge_type', data='Frequency')
+colour_type_dcc = dcc.Store(id='colour_type', data='Behaviours')
+colour_source_dcc = dcc.Store(id='colour_source', data='Source')
+show_edges_dcc = dcc.Store(id='show_edges', data='All')
+normalise_dcc = dcc.Store(id='normalise', data=True)
+
+meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
+
+graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
+                      node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
+                      meeting_1_dcc])
 app.layout = graph_tab
 
-# @callback(
-#         Output('tooltip', 'children'),
-#         [Input('BiT', 'mouseoverNodeData'),
-#         Input('BiT', 'mouseoverEdgeData')])
-# def mouseover_node_data(hover_node_data, hover_edge_data):
-#     if hover_node_data or hover_edge_data:
-#         component = list(ctx.triggered_prop_ids.keys())[0]
-#         text_input = ""
-#         if 'Node' in component:
-#             text_input = 'Node'
-#         if 'Edge' in component:
-#             text_input = 'Edge'
-#         if text_input == 'Node':
-#             return hover_node_data['id'] + ", with frequency: " + str(round(float(hover_node_data['freq']), 3)) + " " + hover_node_data['stats']
-#         elif text_input == 'Edge':
-#             if node_type == 'Behaviours':
-#                 if edge_type == 'Frequency':
-#                     return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
-#                 else:
-#                     return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + str(round(hover_edge_data['weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats']
-#             else:
-#                 if edge_type == 'Frequency':
-#                     return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " " + hover_edge_data['stats']
-#                 else:
-#                     return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + str(round(hover_edge_data['original_weight'], 3)) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats']
-#
 app.clientside_callback(
     """
     function(hover_node_data) {
-        if (hover_node_data) {
-            return hover_node_data['id'] + ", with frequency: " + hover_node_data['freq'] + " " + hover_node_data['stats'];
+        return hover_node_data['id'] + " with frequency: " + parseFloat(hover_node_data['freq']).toFixed(3) + " " + hover_node_data['stats'];
+    }
+    """,
+    Output('tooltip', 'children', allow_duplicate=True),
+    [Input('BiT', 'mouseoverNodeData')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(hover_edge_data, node_type, edge_type) {
+        return edge_type;
+        if (node_type == 'Behaviours') {
+            if (edge_type == 'Frequency') {
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4) + " " + hover_edge_data['stats'];
+            }
+            else {
+                return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + parseFloat(hover_edge_data['weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats'];
+            }
+        }
+        else {
+            if (edge_type == 'Frequency') {
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4) + " " + hover_edge_data['stats'];
+            }
+            else {
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats'];
+            }
         }
     }
     """,
-    Output('tooltip', 'children'),
-    Input('BiT', 'mouseoverNodeData'),
+    Output('tooltip', 'children', allow_duplicate=True),
+    [Input('BiT', 'mouseoverEdgeData'),
+     Input('node_type', 'data'),
+     Input('meeting_1', 'data')],
     prevent_initial_call=True
 )
 
@@ -393,17 +334,15 @@ app.clientside_callback(
 #     }
 
 # Convert to client-side callback
-# app.clientside_callback(
-#     """
-#     function(layout) {
-#         style = {
-#             'name': layout
-#         };
-#         return style;
-#     """,
-#     Output('BiT', 'layout'),
-#     [Input('dropdown-update-layout', 'value')]
-# )
+app.clientside_callback(
+    """
+    function(value) {
+        return value;
+    """,
+    Output('tooltip', 'children', allow_duplicate=True),
+    Input('dropdown-update-layout', 'value'),
+    prevent_initial_call=True
+)
 
 # @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
 #         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
@@ -461,31 +400,78 @@ app.clientside_callback(
 #         edges = current_edges
 #         # Format selected_weight to display only 2 decimal places
 #         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
-#
-# @callback(Input('radio-update-nodes', 'value'),
-#     prevent_initial_call=True)
-# def update_team(value):
-#     global node_type
-#     node_type = value
-#
-# @callback(Input('radio-update-edges', 'value'),
-#     prevent_initial_call=True)
-# def update_edge_weight(value):
-#     global edge_type
-#     edge_type = value
-#
-# @callback(Input('radio-update-colour_type', 'value'),
-#     prevent_initial_call=True)
-# def update_colour_type(value):
-#     global colour_type
-#     colour_type = value
-#
-# @callback(Input('radio-update-colour-source', 'value'),
-#     prevent_initial_call=True)
-# def update_colour_source(value):
-#     global colour_source
-#     colour_source = value
-#
+
+app.clientside_callback(
+    """
+    function(node_type) {
+        return node_type;
+    }
+    """,
+    Output('node_type', 'data'),
+    [Input('radio-update-nodes', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(edge_type) {
+        return edge_type;
+    }
+    """,
+    Output('edge_type', 'data'),
+    [Input('radio-update-edges', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(colour_type) {
+        return colour_type;
+    }
+    """,
+    Output('colour_type', 'data'),
+    [Input('radio-update-colour_type', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(colour_source) {
+        return colour_source;
+    }
+    """,
+    Output('colour_source', 'data'),
+    [Input('radio-update-colour-source', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(show_edges) {
+        return show_edges;
+    }
+    """,
+    Output('show_edges', 'data'),
+    [Input('radio-update-edge-options', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(normalise) {
+        if (normalise.includes('Normalise')) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    """,
+    Output('normalise', 'data'),
+    [Input('checkbox-update-normalise', 'value')],
+    prevent_initial_call=True
+)
+
 # @callback(Output('BiT', 'elements', allow_duplicate=True),
 #     Input('radio-update-edge-options', 'value'),
 #     prevent_initial_call=True)
@@ -528,25 +514,17 @@ app.clientside_callback(
 #     else:
 #         return [[]]
 #
-# @callback(Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
-# def update_graph_with_meeting(value):
-#     global meeting_1
-#     if value is not None:
-#         meeting_1 = value
+@callback(Output('meeting_1', 'data'),
+    Input('dropdown-update-meeting', 'value'), prevent_initial_call=True)
+def update_graph_with_meeting(value):
+    if value is not None:
+        return value
 #
 # @callback(Input('dropdown-update-meeting-compare', 'value'), prevent_initial_call=True)
 # def update_graph_with_meeting_compare(value):
 #     global meeting_2
 #     if value is not None:
 #         meeting_2 = value
-#
-# @callback(Input('checkbox-update-normalise', 'value'), prevent_initial_call=True)
-# def update_normalise(value):
-#     global normalise
-#     if 'Normalise' in value:
-#         normalise = True
-#     else:
-#         normalise = False
 #
 # @callback([Output('BiT', 'elements', allow_duplicate=True),
 #              Output('BiT', 'stylesheet'),
@@ -569,4 +547,4 @@ app.clientside_callback(
 #         raise PreventUpdate
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run(debug=False)
