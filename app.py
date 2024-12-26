@@ -1,4 +1,4 @@
-from dash import Dash, html, Input, Output, callback, dcc, ctx, State
+from dash import Dash, html, Input, Output, callback, dcc, ctx, State, ClientsideFunction
 import dash_cytoscape as cyto
 import dash_bootstrap_components as dbc
 
@@ -260,12 +260,14 @@ colour_source_dcc = dcc.Store(id='colour_source', data='Source')
 show_edges_dcc = dcc.Store(id='show_edges', data='All')
 normalise_dcc = dcc.Store(id='normalise', data=True)
 
+group_by_dcc = dcc.Store(id='group_by', data='Teams')
+database_1_dcc = dcc.Store(id='database_1', data='GEC2017')
 meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
 meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                       node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                      meeting_1_dcc, meeting_2_dcc])
+                      group_by_dcc, database_1_dcc, meeting_1_dcc, meeting_2_dcc])
 app.layout = graph_tab
 
 app.clientside_callback(
@@ -325,15 +327,6 @@ app.clientside_callback(
 #                         current_edges.append(edge)
 #         return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 
-
-# @callback(Output('BiT', 'layout'),
-#               Input('dropdown-update-layout', 'value'))
-# def update_layout(layout):
-#     return {
-#         'name': layout,
-#         #'animate': True
-#     }
-
 app.clientside_callback(
     """
     function(value) {
@@ -362,6 +355,18 @@ app.clientside_callback(
 #     global database_1
 #     database_1 = value
 #     return get_teams_for_group(value, group_by)
+
+# TODO: create js files for the following function
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='get_teams_for_group'
+    ),
+    Output('tooltip', 'children', allow_duplicate=True),
+    [Input('dropdown-update-database', 'value')],
+    State('group_by', 'data'),
+    prevent_initial_call=True
+)
 #
 # @callback(Output('dropdown-update-team-compare', 'options'),
 # Input('dropdown-update-database-compare', 'value'),prevent_initial_call=True)
@@ -448,7 +453,6 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# TODO: Hide/show edges based on radio button
 app.clientside_callback(
     """
     function(show_edges) {
@@ -459,6 +463,22 @@ app.clientside_callback(
     [Input('radio-update-edge-options', 'value')],
     prevent_initial_call=True
 )
+
+# TODO: Hide/show edges based on radio button
+# app.clientside_callback(
+#     """,
+#     function(show) {
+#         var nodes = [];
+#         var edges = [];
+#         if (show.includes('All')) {
+#             nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats);
+#     }
+#     """,
+#     Output('BiT', 'elements', allow_duplicate=True),
+#     [Input('show_edges', 'data')],
+#     prevent_initial_call=True
+# )
+
 # @callback(Output('BiT', 'elements', allow_duplicate=True),
 #     Input('radio-update-edge-options', 'value'),
 #     prevent_initial_call=True)
