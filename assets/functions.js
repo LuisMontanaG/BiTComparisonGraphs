@@ -14,10 +14,14 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 const data = await response.text();
                 console.log("si")
                 console.log(data)
-                return data;
+                return test();
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         }
     }
 });
+
+function test() {
+    return "test"
+}
