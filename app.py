@@ -268,6 +268,7 @@ meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                       node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
                       group_by_dcc, database_1_dcc, meeting_1_dcc, meeting_2_dcc])
+
 app.layout = graph_tab
 
 app.clientside_callback(
