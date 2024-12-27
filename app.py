@@ -271,10 +271,8 @@ meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 node_data_dcc = dcc.Store(id='node_data', data=node_data)
 node_signs_dcc = dcc.Store(id='node_signs', data=node_signs)
 edge_data_dcc = dcc.Store(id='edge_data', data=edge_data)
-
 # Convert edge_signs (dict with keys as tuples) to something equivalent in JS
 edge_signs_list = [[list(k), v] for k, v in edge_signs.items()]
-
 edge_signs_dcc = dcc.Store(id='edge_signs', data=edge_signs_list)
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
@@ -328,23 +326,22 @@ app.clientside_callback(
 )
 
 # Select node callback
-
-# @callback(Output('BiT', 'elements', allow_duplicate=True),
-#             Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
-# def select_node(selected_nodes):
-#     if len(selected_nodes) == 0:
-#         return get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats) + get_original_nodes(node_data, node_type, node_signs,colour_type, node_stats)
-#     else:
-#         current_edges = []
-#         for node in selected_nodes:
-#             for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-#                 if colour_source == 'Source':
-#                     if edge['data']['source'] == node['id']:
-#                         current_edges.append(edge)
-#                 else:
-#                     if edge['data']['target'] == node['id']:
-#                         current_edges.append(edge)
-#         return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='select_nodes'
+    ),
+    Output('BiT', 'elements', allow_duplicate=True),
+    [Input('BiT', 'selectedNodeData')],
+    State('node_data', 'data'),
+    State('node_type', 'data'),
+    State('node_signs', 'data'),
+    State('colour_type', 'data'),
+    State('colour_source', 'data'),
+    State('edge_data', 'data'),
+    State('edge_signs', 'data'),
+    prevent_initial_call=True
+)
 
 # Dropdown callbacks
 
@@ -608,4 +605,4 @@ app.clientside_callback(
 #         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
 
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run_server(debug=True)

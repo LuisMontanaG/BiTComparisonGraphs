@@ -97,6 +97,35 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
             }
             // Append edges to nodes
             return nodes.concat(edges);
+        },
+
+        select_nodes: function (selected_nodes, node_data, node_type, node_signs, colour_type, colour_source, edge_data, edge_signs) {
+            edge_signs = new Map(edge_signs);
+            // Change the keys of the map to string
+            edge_signs = new Map([...edge_signs].map(([k, v]) => [JSON.stringify(k), v]));
+            const nodes = get_original_nodes(node_data, node_type, node_signs, colour_type);
+            let edges;
+            if (selected_nodes.length === 0) {
+                edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs);
+            }
+            else {
+                const current_edges = [];
+                selected_nodes.forEach(node => {
+                    get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs).forEach(edge => {
+                        if (colour_source === 'Source') {
+                            if (edge['data']['source'] === node['id']) {
+                                current_edges.push(edge);
+                            }
+                        } else {
+                            if (edge['data']['target'] === node['id']) {
+                                current_edges.push(edge);
+                            }
+                        }
+                    });
+                });
+                edges = current_edges;
+            }
+            return nodes.concat(edges);
         }
     }
 });
@@ -132,8 +161,6 @@ function get_original_nodes(node_data, node_type, node_signs, colour_type) {
             });
         }
     }
-
-    console.log(original_nodes);
     return original_nodes;
 }
 
