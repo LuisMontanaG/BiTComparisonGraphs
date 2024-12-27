@@ -605,4 +605,4 @@ app.clientside_callback(
 #         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)
