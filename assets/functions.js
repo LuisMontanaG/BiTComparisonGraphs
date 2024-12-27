@@ -132,12 +132,8 @@ function get_original_nodes(node_data, node_type, node_signs, colour_type) {
             });
         }
     }
-    // Change the class of each node depending on the sign of the size (add word positive or negative)
-    original_nodes = original_nodes.map((node, i) => {
-        node['classes'] += node_signs[i];
-        return node;
-    });
 
+    console.log(original_nodes);
     return original_nodes;
 }
 

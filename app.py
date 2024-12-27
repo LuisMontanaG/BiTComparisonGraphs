@@ -534,43 +534,6 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# Update edges based on radio button
-# TODO: Hide/show edges based on radio button
-# app.clientside_callback(
-#     """,
-#     function(show) {
-#         var nodes = [];
-#         var edges = [];
-#         if (show.includes('All')) {
-#             nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats);
-#     }
-#     """,
-#     Output('BiT', 'elements', allow_duplicate=True),
-#     [Input('show_edges', 'data')],
-#     prevent_initial_call=True
-# )
-
-# @callback(Output('BiT', 'elements', allow_duplicate=True),
-#     Input('radio-update-edge-options', 'value'),
-#     prevent_initial_call=True)
-# def update_show_edges(value):
-#     global show_edges
-#     show_edges = value
-#     global nodes, edges
-#     if value == 'All':
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
-#         return edges + nodes
-#     else:
-#         # Remove edges with weight less than selected_weight
-#         current_edges = []
-#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-#             if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == value.lower():
-#                 current_edges.append(edge)
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = current_edges
-#         return edges + nodes
-
 # Normalise checkbox
 app.clientside_callback(
     """
