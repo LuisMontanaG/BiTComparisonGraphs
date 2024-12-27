@@ -22,7 +22,10 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                     const files2 = await read_files(database2);
                     const teams1 = files1[2];
                     const teams2 = files2[2];
-                    return [teams1.map(name => ({'label': name, 'value': name})), teams2.map(name => ({'label': name, 'value': name})), variable];
+                    return [teams1.map(name => ({'label': name, 'value': name})), teams2.map(name => ({
+                        'label': name,
+                        'value': name
+                    })), variable];
                 } else {
                     const names1 = await read_team_groups_from_file(database1, variable);
                     const names2 = await read_team_groups_from_file(database2, variable);
@@ -81,8 +84,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
 
             if (show.includes('All')) {
                 edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs)
-            }
-            else {
+            } else {
                 show = show.toLowerCase()
                 var current_edges = [];
                 var original_edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs);
@@ -107,8 +109,7 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
             let edges;
             if (selected_nodes.length === 0) {
                 edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs);
-            }
-            else {
+            } else {
                 const current_edges = [];
                 selected_nodes.forEach(node => {
                     get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs).forEach(edge => {
@@ -126,6 +127,44 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 edges = current_edges;
             }
             return nodes.concat(edges);
+        },
+
+        show_weight_edges: function (weight, node_data, node_type, edge_type, node_signs, colour_type, colour_source, edge_data, edge_signs, min_weight, max_weight, show_edges) {
+            edge_signs = new Map(edge_signs);
+            // Change the keys of the map to string
+            edge_signs = new Map([...edge_signs].map(([k, v]) => [JSON.stringify(k), v]));
+            const nodes = get_original_nodes(node_data, node_type, node_signs, colour_type);
+            let edges;
+
+            let current_edges = [];
+            const original_edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs);
+            original_edges.forEach(edge => {
+                if (show_edges === 'All') {
+                    if (edge_type === 'Probability') {
+                        if (weight[0] <= edge['data']['weight'] && edge['data']['weight'] <= weight[1]) {
+                            current_edges.push(edge);
+                        }
+                    } else {
+                        if (weight[0] <= edge['data']['weight'] && edge['data']['weight'] <= weight[1]) {
+                            current_edges.push(edge);
+                        }
+                    }
+                } else {
+                    if (edge_signs.get(JSON.stringify([edge['data']['source'], edge['data']['target'], edge['data']['behaviour']])) === show_edges.toLowerCase()) {
+                        if (edge_type === 'Probability') {
+                            if (weight[0] <= edge['data']['weight'] && edge['data']['weight'] <= weight[1]) {
+                                current_edges.push(edge);
+                            }
+                        } else {
+                            if (weight[0] <= edge['data']['weight'] && edge['data']['weight'] <= weight[1]) {
+                                current_edges.push(edge);
+                            }
+                        }
+                    }
+                }
+            });
+            edges = current_edges;
+            return [nodes.concat(edges), "Weight threshold: " + parseFloat(weight[0]).toFixed(2) + " - " + parseFloat(weight[1]).toFixed(2)];
         }
     }
 });

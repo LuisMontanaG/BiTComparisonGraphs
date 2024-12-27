@@ -260,6 +260,9 @@ colour_source_dcc = dcc.Store(id='colour_source', data='Source')
 show_edges_dcc = dcc.Store(id='show_edges', data='All')
 normalise_dcc = dcc.Store(id='normalise', data=True)
 
+min_weight_dcc = dcc.Store(id='min_weight', data=min_weight)
+max_weight_dcc = dcc.Store(id='max_weight', data=max_weight)
+
 group_by_dcc = dcc.Store(id='group_by', data='Teams')
 database_1_dcc = dcc.Store(id='database_1', data='GEC2017')
 database_2_dcc = dcc.Store(id='database_2', data='GEC2017')
@@ -276,9 +279,10 @@ edge_signs_list = [[list(k), v] for k, v in edge_signs.items()]
 edge_signs_dcc = dcc.Store(id='edge_signs', data=edge_signs_list)
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
-                      node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                      group_by_dcc, database_1_dcc, database_2_dcc, team_1_dcc, team_2_dcc, meeting_1_dcc, meeting_2_dcc,
-                      node_data_dcc, node_signs_dcc, edge_data_dcc, edge_signs_dcc])
+                        node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
+                        min_weight_dcc, max_weight_dcc,
+                        group_by_dcc, database_1_dcc, database_2_dcc, team_1_dcc, team_2_dcc, meeting_1_dcc, meeting_2_dcc,
+                        node_data_dcc, node_signs_dcc, edge_data_dcc, edge_signs_dcc])
 
 app.layout = graph_tab
 
@@ -519,7 +523,7 @@ app.clientside_callback(
         namespace='clientside',
         function_name='show_hide_edges'
     ),
-    Output('BiT', 'elements'),
+    Output('BiT', 'elements', allow_duplicate=True),
     Input('show_edges', 'data'),
     State('node_data', 'data'),
     State('node_type', 'data'),
@@ -548,6 +552,28 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Weight slider
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='show_weight_edges'
+    ),
+    Output('BiT', 'elements'),
+    Output('weight-slider-output', 'children'),
+    Input('weight-slider', 'value'),
+    State('node_data', 'data'),
+    State('node_type', 'data'),
+    State('edge_type', 'data'),
+    State('node_signs', 'data'),
+    State('colour_type', 'data'),
+    State('colour_source', 'data'),
+    State('edge_data', 'data'),
+    State('edge_signs', 'data'),
+    State('min_weight', 'data'),
+    State('max_weight', 'data'),
+    State('show_edges', 'data')
+)
+
 # Update button
 # @callback([Output('BiT', 'elements', allow_duplicate=True),
 #              Output('BiT', 'stylesheet'),
@@ -568,41 +594,6 @@ app.clientside_callback(
 #         return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
 #     else:
 #         raise PreventUpdate
-
-# Weight slider
-# @callback(
-#     [Output('BiT', 'elements'),
-#     Output('weight-slider-output', 'children')],
-#     Input('weight-slider', 'value'))
-# def update_graph(selected_weight):
-#     global nodes, edges
-#     if selected_weight == min_weight:
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
-#         return edges + nodes, "Weight threshold: " + str(selected_weight)
-#     else:
-#         # Remove edges with weight less than selected_weight
-#         current_edges = []
-#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-#             if show_edges == 'All':
-#                 if edge_type == 'Probability':
-#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                         current_edges.append(edge)
-#                 else:
-#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                         current_edges.append(edge)
-#             else:
-#                 if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
-#                     if edge_type == 'Probability':
-#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                             current_edges.append(edge)
-#                     else:
-#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                             current_edges.append(edge)
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = current_edges
-#         # Format selected_weight to display only 2 decimal places
-#         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
 
 if __name__ == '__main__':
     app.run_server(debug=False)
