@@ -22,11 +22,11 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                     const files2 = await read_files(database2);
                     const teams1 = files1[2];
                     const teams2 = files2[2];
-                    return [teams1.map(name => ({'label': name, 'value': name})), teams2.map(name => ({'label': name, 'value': name}))];
+                    return [teams1.map(name => ({'label': name, 'value': name})), teams2.map(name => ({'label': name, 'value': name})), variable];
                 } else {
                     const names1 = await read_team_groups_from_file(database1, variable);
                     const names2 = await read_team_groups_from_file(database2, variable);
-                    return [names1, names2];
+                    return [names1, names2, variable];
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -38,7 +38,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 const files = await read_files(database);
                 var events = files[0];
                 var meetings = []
-
                 if (team === null) {
                     meetings.push('All');
                 } else if (team === 'All') {
@@ -52,7 +51,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 } else if (team.match(/\d+/g)) {
                     events = events.data.filter(event => event.sequenceId.split('_')[1] === team);
                     meetings = events.map(event => event.sequenceId.split('_')[0]);
-                    console.log(meetings);
                     meetings = [...new Set(meetings)];
                     meetings.sort();
                     meetings.unshift('All');
@@ -153,7 +151,6 @@ async function read_teams_from_file(database, variable, group_name) {
     var is_variable = false;
     var is_group = false;
     var teams = [];
-
     lines.forEach(line => {
         if (line.includes('Attribute')) {
             is_variable = line.includes(variable);
@@ -169,6 +166,8 @@ async function read_teams_from_file(database, variable, group_name) {
             teams = line.split(',');
             teams = teams.filter(team => team !== 'NA');
             teams = teams.map(team => team.split('_')[1].trim());
+            is_group = false;
+            is_variable = false;
         }
     });
     return teams

@@ -359,6 +359,7 @@ app.clientside_callback(
     ),
     Output('dropdown-update-team', 'options'),
     Output('dropdown-update-team-compare', 'options'),
+    Output('group_by', 'data'),
     [Input('dropdown-update-group', 'value')],
     State('database_1', 'data'),
     State('database_2', 'data'),
