@@ -262,15 +262,19 @@ normalise_dcc = dcc.Store(id='normalise', data=True)
 
 group_by_dcc = dcc.Store(id='group_by', data='Teams')
 database_1_dcc = dcc.Store(id='database_1', data='GEC2017')
+database_2_dcc = dcc.Store(id='database_2', data='GEC2017')
 meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
 meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                       node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                      group_by_dcc, database_1_dcc, meeting_1_dcc, meeting_2_dcc])
+                      group_by_dcc, database_1_dcc, database_2_dcc, meeting_1_dcc, meeting_2_dcc])
 
 app.layout = graph_tab
 
+# Hover callbacks
+
+# Nodes
 app.clientside_callback(
     """
     function(hover_node_data) {
@@ -282,6 +286,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Edges
 app.clientside_callback(
     """
     function(hover_edge_data, node_type, edge_type) {
@@ -311,6 +316,8 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Select node callback
+
 # @callback(Output('BiT', 'elements', allow_duplicate=True),
 #             Input('BiT', 'selectedNodeData'), prevent_initial_call=True)
 # def select_node(selected_nodes):
@@ -328,6 +335,9 @@ app.clientside_callback(
 #                         current_edges.append(edge)
 #         return current_edges + get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
 
+# Dropdown callbacks
+
+# Layout
 app.clientside_callback(
     """
     function(value) {
@@ -341,75 +351,99 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# @callback([Output('dropdown-update-team', 'options', allow_duplicate=True),
-#         Output('dropdown-update-team-compare', 'options', allow_duplicate=True)],
-#     Input('dropdown-update-group', 'value'),
-#     prevent_initial_call=True)
-# def update_group(value):
-#     global group_by
-#     group_by = value
-#     return get_teams_for_group(database_1, value), get_teams_for_group(database_2, value)
-#
-# @callback(Output('dropdown-update-team', 'options'),
-# Input('dropdown-update-database', 'value'),prevent_initial_call=True)
-# def update_database(value):
-#     global database_1
-#     database_1 = value
-#     return get_teams_for_group(value, group_by)
+# Group by
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='get_teams_for_group_both_databases'
+    ),
+    Output('dropdown-update-team', 'options'),
+    Output('dropdown-update-team-compare', 'options'),
+    [Input('dropdown-update-group', 'value')],
+    State('database_1', 'data'),
+    State('database_2', 'data'),
+    prevent_initial_call=True
+)
 
-# TODO: create js files for the following function
+# Database 1
 app.clientside_callback(
     ClientsideFunction(
         namespace='clientside',
         function_name='get_teams_for_group'
     ),
-    Output('dropdown-update-team', 'options'),
+    Output('dropdown-update-team', 'options', allow_duplicate=True),
+    Output('database_1', 'data'),
     [Input('dropdown-update-database', 'value')],
     State('group_by', 'data'),
     prevent_initial_call=True
 )
-#
-# @callback(Output('dropdown-update-team-compare', 'options'),
-# Input('dropdown-update-database-compare', 'value'),prevent_initial_call=True)
-# def update_database(value):
-#     global database_2
-#     database_2 = value
-#     return get_teams_for_group(value, group_by)
-#
-# @callback(
-#     [Output('BiT', 'elements'),
-#     Output('weight-slider-output', 'children')],
-#     Input('weight-slider', 'value'))
-# def update_graph(selected_weight):
-#     global nodes, edges
-#     if selected_weight == min_weight:
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
-#         return edges + nodes, "Weight threshold: " + str(selected_weight)
-#     else:
-#         # Remove edges with weight less than selected_weight
-#         current_edges = []
-#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
-#             if show_edges == 'All':
-#                 if edge_type == 'Probability':
-#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                         current_edges.append(edge)
-#                 else:
-#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                         current_edges.append(edge)
-#             else:
-#                 if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
-#                     if edge_type == 'Probability':
-#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                             current_edges.append(edge)
-#                     else:
-#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
-#                             current_edges.append(edge)
-#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
-#         edges = current_edges
-#         # Format selected_weight to display only 2 decimal places
-#         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
 
+# Database 2
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='get_teams_for_group'
+    ),
+    Output('dropdown-update-team-compare', 'options', allow_duplicate=True),
+    Output('database_2', 'data'),
+    [Input('dropdown-update-database-compare', 'value')],
+    State('group_by', 'data'),
+    prevent_initial_call=True
+)
+
+# Team 1
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='get_meetings_for_team'
+    ),
+    Output('dropdown-update-meeting', 'options'),
+    [Input('dropdown-update-team', 'value')],
+    State('database_1', 'data'),
+    State('group_by', 'data'),
+    prevent_initial_call=True
+)
+
+# Team 2
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='get_meetings_for_team'
+    ),
+    Output('dropdown-update-meeting-compare', 'options'),
+    [Input('dropdown-update-team-compare', 'value')],
+    State('database_2', 'data'),
+    State('group_by', 'data'),
+    prevent_initial_call=True
+)
+
+# Meeting 1
+app.clientside_callback(
+    """
+    function(value) {
+        return value;
+    }
+    """,
+    Output('meeting_1', 'data'),
+    [Input('dropdown-update-meeting', 'value')],
+    prevent_initial_call=True
+)
+
+# Meeting 2
+app.clientside_callback(
+    """
+    function(value) {
+        return value;
+    }
+    """,
+    Output('meeting_2', 'data'),
+    [Input('dropdown-update-meeting-compare', 'value')],
+    prevent_initial_call=True
+)
+
+# Radio button callbacks
+
+# Node type
 app.clientside_callback(
     """
     function(node_type) {
@@ -421,6 +455,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Edge type
 app.clientside_callback(
     """
     function(edge_type) {
@@ -432,6 +467,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Colour type
 app.clientside_callback(
     """
     function(colour_type) {
@@ -443,6 +479,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Colour source
 app.clientside_callback(
     """
     function(colour_source) {
@@ -454,6 +491,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Show edges
 app.clientside_callback(
     """
     function(show_edges) {
@@ -465,6 +503,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Update edges based on radio button
 # TODO: Hide/show edges based on radio button
 # app.clientside_callback(
 #     """,
@@ -501,6 +540,7 @@ app.clientside_callback(
 #         edges = current_edges
 #         return edges + nodes
 
+# Normalise checkbox
 app.clientside_callback(
     """
     function(normalise) {
@@ -517,49 +557,7 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# @callback(
-#     [Output('dropdown-update-meeting', 'options')],
-#     Input('dropdown-update-team', 'value'), prevent_initial_call=True)
-# def update_meeting_display(value):
-#     if value != '':
-#         global team_1
-#         team_1 = value
-#         return [get_meetings_for_team(database_1, group_by, value)]
-#     else:
-#         return [[]]
-#
-# @callback([Output('dropdown-update-meeting-compare', 'options')],
-#             Input('dropdown-update-team-compare', 'value'), prevent_initial_call=True)
-# def update_meeting_display_compare(value):
-#     if value != '':
-#         global team_2
-#         team_2 = value
-#         return [get_meetings_for_team(database_2, group_by, value)]
-#     else:
-#         return [[]]
-
-app.clientside_callback(
-    """
-    function(value) {
-        return value;
-    }
-    """,
-    Output('meeting_1', 'data'),
-    [Input('dropdown-update-meeting', 'value')],
-    prevent_initial_call=True
-)
-
-app.clientside_callback(
-    """
-    function(value) {
-        return value;
-    }
-    """,
-    Output('meeting_2', 'data'),
-    [Input('dropdown-update-meeting-compare', 'value')],
-    prevent_initial_call=True
-)
-
+# Update button
 # @callback([Output('BiT', 'elements', allow_duplicate=True),
 #              Output('BiT', 'stylesheet'),
 #              Output('weight-slider', 'min'),
@@ -579,6 +577,41 @@ app.clientside_callback(
 #         return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
 #     else:
 #         raise PreventUpdate
+
+# Weight slider
+# @callback(
+#     [Output('BiT', 'elements'),
+#     Output('weight-slider-output', 'children')],
+#     Input('weight-slider', 'value'))
+# def update_graph(selected_weight):
+#     global nodes, edges
+#     if selected_weight == min_weight:
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats)
+#         return edges + nodes, "Weight threshold: " + str(selected_weight)
+#     else:
+#         # Remove edges with weight less than selected_weight
+#         current_edges = []
+#         for edge in get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, edge_stats):
+#             if show_edges == 'All':
+#                 if edge_type == 'Probability':
+#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                         current_edges.append(edge)
+#                 else:
+#                     if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                         current_edges.append(edge)
+#             else:
+#                 if edge_signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']] == show_edges.lower():
+#                     if edge_type == 'Probability':
+#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                             current_edges.append(edge)
+#                     else:
+#                         if selected_weight[0] <= edge['data']['weight'] <= selected_weight[1]:
+#                             current_edges.append(edge)
+#         nodes = get_original_nodes(node_data, node_type, node_signs, colour_type, node_stats)
+#         edges = current_edges
+#         # Format selected_weight to display only 2 decimal places
+#         return edges + nodes, "Weight threshold: " + str(round(selected_weight[0], 2)) + " - " + str(round(selected_weight[1], 2))
 
 if __name__ == '__main__':
     app.run_server(debug=False)

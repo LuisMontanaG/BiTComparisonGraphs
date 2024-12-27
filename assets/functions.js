@@ -5,8 +5,66 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                 if (variable === 'Teams') {
                     const files = await read_files(database);
                     const teams = files[2];
-                    return teams.map(name => ({'label': name, 'value': name}));
+                    return [teams.map(name => ({'label': name, 'value': name})), database];
+                } else {
+                    const names = await read_team_groups_from_file(database, variable);
+                    return [names, database];
                 }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        },
+
+        get_teams_for_group_both_databases: async function (variable, database1, database2) {
+            try {
+                if (variable === 'Teams') {
+                    const files1 = await read_files(database1);
+                    const files2 = await read_files(database2);
+                    const teams1 = files1[2];
+                    const teams2 = files2[2];
+                    return [teams1.map(name => ({'label': name, 'value': name})), teams2.map(name => ({'label': name, 'value': name}))];
+                } else {
+                    const names1 = await read_team_groups_from_file(database1, variable);
+                    const names2 = await read_team_groups_from_file(database2, variable);
+                    return [names1, names2];
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        },
+
+        get_meetings_for_team: async function (team, database, group_by) {
+            try {
+                const files = await read_files(database);
+                var events = files[0];
+                var meetings = []
+
+                if (team === null) {
+                    meetings.push('All');
+                } else if (team === 'All') {
+                    meetings = events.getColumn('sequenceId');
+                    meetings = [...new Set(meetings)];
+                    meetings = meetings.map(meeting => meeting.split('_')[0]);
+                    meetings = [...new Set(meetings)];
+                    meetings = meetings.filter(meeting => meeting !== "");
+                    meetings.sort();
+                    meetings.unshift('All');
+                } else if (team.match(/\d+/g)) {
+                    events = events.data.filter(event => event.sequenceId.split('_')[1] === team);
+                    meetings = events.map(event => event.sequenceId.split('_')[0]);
+                    console.log(meetings);
+                    meetings = [...new Set(meetings)];
+                    meetings.sort();
+                    meetings.unshift('All');
+                } else {
+                    const team_list = await read_teams_from_file(database, group_by, team);
+                    events = events.data.filter(event => team_list.includes(event.sequenceId.split('_')[1]));
+                    meetings = events.map(event => event.sequenceId.split('_')[0]);
+                    meetings = [...new Set(meetings)];
+                    meetings.sort();
+                    meetings.unshift('All');
+                }
+                return meetings.map(name => ({'label': name, 'value': name}));
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -60,6 +118,60 @@ async function read_files(database) {
     meetings.unshift('All');
 
     return [events, entities, teams, behaviours, meetings];
+}
+
+async function read_team_groups_from_file(database, variable) {
+    const file = "https://raw.githubusercontent.com/LuisMontanaG/BiTComparisonGraphs/refs/heads/main/" + database + "/Variables.csv"
+    const data = await fetch(file)
+    const variables_data = await data.text()
+
+    const lines = variables_data.split('\n')
+    lines.pop();
+    var is_variable = false;
+    var names = [];
+
+    lines.forEach(line => {
+        if (line.includes('Attribute')) {
+            is_variable = line.includes(variable);
+        }
+        if (is_variable) {
+            if (line.startsWith('ids')) {
+                names.push(line.split(':')[1].trim());
+            }
+        }
+    });
+    return names.map(name => ({'label': name, 'value': name}));
+}
+
+async function read_teams_from_file(database, variable, group_name) {
+    const file = "https://raw.githubusercontent.com/LuisMontanaG/BiTComparisonGraphs/refs/heads/main/" + database + "/Variables.csv"
+    const data = await fetch(file)
+    const variables_data = await data.text()
+
+    const lines = variables_data.split('\n')
+    lines.pop();
+    var is_variable = false;
+    var is_group = false;
+    var teams = [];
+
+    lines.forEach(line => {
+        if (line.includes('Attribute')) {
+            is_variable = line.includes(variable);
+            return;
+        }
+        if (is_variable) {
+            if (line.includes(group_name)) {
+                is_group = true;
+                return;
+            }
+        }
+        if (is_group) {
+            teams = line.split(',');
+            teams = teams.filter(team => team !== 'NA');
+            teams = teams.map(team => team.split('_')[1].trim());
+        }
+    });
+    return teams
 }
 
 class DataFrame {
