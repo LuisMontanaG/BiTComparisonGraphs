@@ -45,16 +45,16 @@ def load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2,
         edge_data = get_participant_edge_data(edge_type, events_2, team_2, meeting_2, entities, normalise)
         node_data_list.append((node_names, freq))
         edge_data_list.append(edge_data)
-    node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, node_signs, node_stats = get_node_data_diff(node_data_list, node_type)
-    edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs, edge_stats = get_edge_data_diff(edge_data_list, edge_type, normalise)
+    node_names, acronyms, acronyms_dict, freq, sizes, node_size_map, node_signs = get_node_data_diff(node_data_list, node_type)
+    edge_data, min_weight, max_weight, weight_bins, edge_size_map, edge_signs = get_edge_data_diff(edge_data_list, edge_type, normalise)
     colors = get_colors(node_names, behaviours_1, colour_type)
     selector_node_classes, selector_edge_classes = get_selector_classes_comparison(node_names, behaviours_1, colors, node_size_map, edge_size_map, colour_type)
-    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type, node_stats)
+    node_data, nodes = get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type)
     if node_type == 'Behaviours':
         edges = get_behaviour_edges_comparison(edge_data, colour_source, edge_signs)
     else:
         edges = get_participant_edges_comparison(edge_data, colour_type, colour_source, edge_signs)
-    return teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours_1, node_stats, edge_stats
+    return teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours_1
 
 def read_files(dataset_name):
     events = pd.read_csv(dataset_name + '/' + events_file)
@@ -105,11 +105,6 @@ def get_behaviour_node_data(events, team_list, team, meeting, normalise):
     node_names = events['event'].unique()
     node_names = node_names[node_names != 'Break']
 
-    # Get additional stats for each node if team and/or meeting = 'All'
-    stats = {}
-    for name in node_names:
-        stats[name] = ''
-
     # Get frequency of events
     freq = events['event'].value_counts()
     # If normalise is True, divide by the number of events and multiply by NORMALISE_MULTIPLIER
@@ -139,11 +134,6 @@ def get_participant_node_data(events, entities, team, meeting, normalise):
     # Get node names
     node_names = participants
 
-    # Get additional stats for each node if team and/or meeting = 'All'
-    stats = {}
-    for name in node_names:
-        stats[name] = ''
-
     # Get frequency of participants
     # Keep events where entityId is in entityIds
     events = events[events['entityId'].isin(entity_ids)]
@@ -169,10 +159,6 @@ def get_node_data_diff(node_data_list, node_type):
 
     # Get the union of all node names
     node_names_diff = list(set().union(*node_names))
-
-    stats = {}
-    for name in node_names_diff:
-        stats[name] = ''
 
     # Get acronyms
     if node_type == 'Behaviours':
@@ -214,7 +200,7 @@ def get_node_data_diff(node_data_list, node_type):
     # Size map
     size_map = "mapData(size," + str(min(sizes)) + "," + str(max(sizes)) + "," + str(NODE_MAP_MIN_SIZE) + "," + str(NODE_MAP_MAX_SIZE) + ")"
 
-    return node_names_diff, acronyms, acronyms_dict, freq_diff, sizes, size_map, signs, stats
+    return node_names_diff, acronyms, acronyms_dict, freq_diff, sizes, size_map, signs
 
 def get_behaviour_edge_data(edge_type, team_list, events, team, meeting, normalise):
     # Check if team_list is empty
@@ -353,11 +339,6 @@ def get_edge_data_diff(edge_data_list, edge_type, normalise):
     # Remove edges with weight 0
     edge_data_diff = {key: value for key, value in edge_data_diff.items() if value[1] != 0}
 
-    # Get additional stats for each edge if team and/or meeting = 'All'
-    stats = {}
-    for name in list(edge_data_diff.keys()):
-        stats[name] = ''
-
     # Dictionary of signs (positive or negative) for each weight
     signs = {key: value[1] / abs(value[1]) for key, value in edge_data_diff.items()}
     # Change -1 for "negative" and 1 for "positive" and 0 for "" in signs
@@ -403,7 +384,7 @@ def get_edge_data_diff(edge_data_list, edge_type, normalise):
     else:
         edge_data_diff = [(key[0], key[1], key[2], value, int(round((value / 100) * source_sum[key[0]]))) for key, value in edge_data_diff.items()]
         edge_size_map = "mapData(weight," + str(min_weight) + "," + str(max_weight) + "," + str(EDGE_MAP_MIN_SIZE) + "," + str(EDGE_MAP_MAX_SIZE) + ")"
-    return edge_data_diff, min_weight, max_weight, weight_bins, edge_size_map, signs, stats
+    return edge_data_diff, min_weight, max_weight, weight_bins, edge_size_map, signs
 
 def get_colors(keys, behaviours, colour_type):
     # List of colors in rgb format
@@ -527,7 +508,7 @@ def get_selector_classes_comparison(node_names, behaviours, colors, node_size_ma
         )
     return selector_node_classes, selector_edge_classes
 
-def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type, stats):
+def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_signs, colour_type):
     # Create a list of random longitudes and latitudes with the size of the number of acronyms
     longitudes = np.random.uniform(-180, 180, len(acronyms))
     latitudes = np.random.uniform(-90, 90, len(acronyms))
@@ -537,7 +518,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
     if node_type == 'Behaviours':
         nodes = [
             {
-                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                 'position': {'x': 20 * lat, 'y': -20 * long},
                 'classes': "node" + short
             }
@@ -547,7 +528,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
         if colour_type == 'Behaviours':
             nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "nodeParticipant"
                 }
@@ -556,7 +537,7 @@ def get_nodes_comparison(node_names, acronyms, freq, sizes, node_type, node_sign
         else:
             nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "node" + short
                 }
@@ -622,11 +603,11 @@ def get_participant_edges_comparison(edge_data, colour_type, colour_source, sign
         edge['classes'] += signs[edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]
     return edges
 
-def get_original_nodes(node_data, node_type, node_signs, colour_type, stats):
+def get_original_nodes(node_data, node_type, node_signs, colour_type):
     if node_type == 'Behaviours':
         original_nodes = [
             {
-                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                 'position': {'x': 20 * lat, 'y': -20 * long},
                 'classes': "node" + short
             }
@@ -636,7 +617,7 @@ def get_original_nodes(node_data, node_type, node_signs, colour_type, stats):
         if colour_type == 'Behaviours':
             original_nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "nodeParticipant"
                 }
@@ -645,7 +626,7 @@ def get_original_nodes(node_data, node_type, node_signs, colour_type, stats):
         else:
             original_nodes = [
                 {
-                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size, 'stats': stats[short]},
+                    'data': {'id': short, 'label': label, 'freq': str(freq), 'size': size},
                     'position': {'x': 20 * lat, 'y': -20 * long},
                     'classes': "node" + short
                 }
@@ -657,12 +638,12 @@ def get_original_nodes(node_data, node_type, node_signs, colour_type, stats):
         node['classes'] += node_signs[i]
     return original_nodes
 
-def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs, stats):
+def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs):
     if node_type == 'Behaviours':
         if colour_source == "Source":
             original_edges = [
                 {
-                    'data': {'source': source, 'target': target, 'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight, 'stats': stats[source, target]},
+                    'data': {'source': source, 'target': target, 'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight},
                     'classes': "edge" + source
                 }
                 for source, target, behaviour, weight, original_weight in edge_data
@@ -670,7 +651,7 @@ def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_si
         else:
             original_edges = [
                 {
-                    'data': {'source': source, 'target': target,'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight, 'stats': stats[source, target]},
+                    'data': {'source': source, 'target': target,'behaviour':behaviour, 'weight': weight, 'original_weight': original_weight},
                     'classes': "edge" + target
                 }
                 for source, target, behaviour, weight, original_weight in edge_data
@@ -679,7 +660,7 @@ def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_si
         if colour_type == 'Behaviours':
             original_edges = [
                 {
-                    'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': stats[source, target]},
+                    'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour},
                     'classes': "edge" + behaviour
                 }
                 for source, target, behaviour, weight, original_weight in edge_data
@@ -688,7 +669,7 @@ def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_si
             if colour_source == "Source":
                 original_edges = [
                     {
-                        'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': stats[source, target]},
+                        'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour},
                         'classes': "edge" + source
                     }
                     for source, target, behaviour, weight, original_weight in edge_data
@@ -696,7 +677,7 @@ def get_original_edges(edge_data, node_type, colour_type, colour_source, edge_si
             else:
                 original_edges = [
                     {
-                        'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour, 'stats': stats[source, target]},
+                        'data': {'source': source, 'target': target, 'weight': weight, 'original_weight': original_weight, 'behaviour': behaviour},
                         'classes': "edge" + target
                     }
                     for source, target, behaviour, weight, original_weight in edge_data

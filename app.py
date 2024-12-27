@@ -19,7 +19,7 @@ colour_source = 'Source'
 show_edges = 'All'
 normalise = True
 
-teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
+teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours = load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
 legend_nodes = get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
@@ -263,12 +263,24 @@ normalise_dcc = dcc.Store(id='normalise', data=True)
 group_by_dcc = dcc.Store(id='group_by', data='Teams')
 database_1_dcc = dcc.Store(id='database_1', data='GEC2017')
 database_2_dcc = dcc.Store(id='database_2', data='GEC2017')
+team_1_dcc = dcc.Store(id='team_1', data='All')
+team_2_dcc = dcc.Store(id='team_2', data='All')
 meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
 meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 
+node_data_dcc = dcc.Store(id='node_data', data=node_data)
+node_signs_dcc = dcc.Store(id='node_signs', data=node_signs)
+edge_data_dcc = dcc.Store(id='edge_data', data=edge_data)
+
+# Convert edge_signs (dict with keys as tuples) to something equivalent in JS
+edge_signs_list = [[list(k), v] for k, v in edge_signs.items()]
+
+edge_signs_dcc = dcc.Store(id='edge_signs', data=edge_signs_list)
+
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                       node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                      group_by_dcc, database_1_dcc, database_2_dcc, meeting_1_dcc, meeting_2_dcc])
+                      group_by_dcc, database_1_dcc, database_2_dcc, team_1_dcc, team_2_dcc, meeting_1_dcc, meeting_2_dcc,
+                      node_data_dcc, node_signs_dcc, edge_data_dcc, edge_signs_dcc])
 
 app.layout = graph_tab
 
@@ -278,7 +290,7 @@ app.layout = graph_tab
 app.clientside_callback(
     """
     function(hover_node_data) {
-        return hover_node_data['id'] + " with frequency: " + parseFloat(hover_node_data['freq']).toFixed(3) + " " + hover_node_data['stats'];
+        return hover_node_data['id'] + " with frequency: " + parseFloat(hover_node_data['freq']).toFixed(3);
     }
     """,
     Output('tooltip', 'children', allow_duplicate=True),
@@ -290,29 +302,28 @@ app.clientside_callback(
 app.clientside_callback(
     """
     function(hover_edge_data, node_type, edge_type) {
-        return node_type + " " + edge_type;
         if (node_type == 'Behaviours') {
             if (edge_type == 'Frequency') {
-                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4) + " " + hover_edge_data['stats'];
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4);
             }
             else {
-                return hover_edge_data['source'].upper() + " -> " + hover_edge_data['target'].upper() + ": " + parseFloat(hover_edge_data['weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)" + " " + hover_edge_data['stats'];
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)";
             }
         }
         else {
             if (edge_type == 'Frequency') {
-                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4) + " " + hover_edge_data['stats'];
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4);
             }
             else {
-                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)" + " " + hover_edge_data['stats'];
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)";
             }
         }
     }
     """,
     Output('tooltip', 'children', allow_duplicate=True),
-    [Input('BiT', 'mouseoverEdgeData'),
+    [Input('BiT', 'mouseoverEdgeData')],
      State('node_type', 'data'),
-     State('meeting_2', 'data')],
+     State('edge_type', 'data'),
     prevent_initial_call=True
 )
 
@@ -399,6 +410,7 @@ app.clientside_callback(
         function_name='get_meetings_for_team'
     ),
     Output('dropdown-update-meeting', 'options'),
+    Output('team_1', 'data'),
     [Input('dropdown-update-team', 'value')],
     State('database_1', 'data'),
     State('group_by', 'data'),
@@ -412,6 +424,7 @@ app.clientside_callback(
         function_name='get_meetings_for_team'
     ),
     Output('dropdown-update-meeting-compare', 'options'),
+    Output('team_2', 'data'),
     [Input('dropdown-update-team-compare', 'value')],
     State('database_2', 'data'),
     State('group_by', 'data'),
@@ -501,6 +514,23 @@ app.clientside_callback(
     """,
     Output('show_edges', 'data'),
     [Input('radio-update-edge-options', 'value')],
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='show_hide_edges'
+    ),
+    Output('BiT', 'elements'),
+    Input('show_edges', 'data'),
+    State('node_data', 'data'),
+    State('node_type', 'data'),
+    State('node_signs', 'data'),
+    State('colour_type', 'data'),
+    State('colour_source', 'data'),
+    State('edge_data', 'data'),
+    State('edge_signs', 'data'),
     prevent_initial_call=True
 )
 

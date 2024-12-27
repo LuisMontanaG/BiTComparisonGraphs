@@ -62,13 +62,154 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                     meetings.sort();
                     meetings.unshift('All');
                 }
-                return meetings.map(name => ({'label': name, 'value': name}));
+                return [meetings.map(name => ({'label': name, 'value': name})), team];
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
+        },
+
+        show_hide_edges: function (show, node_data, node_type, node_signs, colour_type, colour_source, edge_data, edge_signs) {
+            edge_signs = new Map(edge_signs);
+            // Change the keys of the map to string
+            edge_signs = new Map([...edge_signs].map(([k, v]) => [JSON.stringify(k), v]));
+
+            // Revert the keys of the map back to their original form
+            // edge_signs = new Map([...edge_signs].map(([k, v]) => [JSON.parse(k), v]));
+
+            var nodes = get_original_nodes(node_data, node_type, node_signs, colour_type);
+            var edges = [];
+
+            if (show.includes('All')) {
+                edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs)
+            }
+            else {
+                show = show.toLowerCase()
+                var current_edges = [];
+                var original_edges = get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs);
+                // Iterate over original edges and keep only the ones whose sign is equal to show value
+                original_edges.forEach(edge => {
+                    const sign = edge_signs.get(JSON.stringify([edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]));
+                    if (show.includes(sign)) {
+                        current_edges.push(edge);
+                    }
+                });
+                edges = current_edges;
+            }
+            // Append edges to nodes
+            return nodes.concat(edges);
         }
     }
 });
+
+function get_original_nodes(node_data, node_type, node_signs, colour_type) {
+    var original_nodes = [];
+    if (node_type === 'Behaviours') {
+        original_nodes = node_data.map((node, i) => {
+            return {
+                'data': {'id': node[0], 'label': node[1], 'freq': node[2], 'size': node[5]},
+                'position': {'x': 20 * node[4], 'y': -20 * node[3]},
+                'classes': "node" + node[0] + node_signs[i]
+            }
+        });
+    }
+    else {
+        if (colour_type === 'Behaviours') {
+            original_nodes = node_data.map((node, i) => {
+                return {
+                    'data': {'id': node[0], 'label': node[1], 'freq': node[2], 'size': node[5]},
+                    'position': {'x': 20 * node[4], 'y': -20 * node[3]},
+                    'classes': "nodeParticipant" + node_signs[i]
+                }
+            });
+        }
+        else {
+            original_nodes = node_data.map((node, i) => {
+                return {
+                    'data': {'id': node[0], 'label': node[1], 'freq': node[2], 'size': node[5]},
+                    'position': {'x': 20 * node[4], 'y': -20 * node[3]},
+                    'classes': "node" + node[0] + node_signs[i]
+                }
+            });
+        }
+    }
+    // Change the class of each node depending on the sign of the size (add word positive or negative)
+    original_nodes = original_nodes.map((node, i) => {
+        node['classes'] += node_signs[i];
+        return node;
+    });
+
+    return original_nodes;
+}
+
+function get_original_edges(edge_data, node_type, colour_type, colour_source, edge_signs) {
+    var original_edges = [];
+    if (node_type === 'Behaviours') {
+        if (colour_source === "Source") {
+            original_edges = edge_data.map((edge, i) => {
+                return {
+                    'data': {'source': edge[0], 'target': edge[1], 'behaviour': edge[2], 'weight': edge[3], 'original_weight': edge[4]},
+                    'classes': "edge" + edge[0]
+                }
+            });
+        } else {
+            original_edges = edge_data.map((edge, i) => {
+                return {
+                    'data': {'source': edge[0], 'target': edge[1], 'behaviour': edge[2], 'weight': edge[3], 'original_weight': edge[4]},
+                    'classes': "edge" + edge[1]
+                }
+            });
+        }
+    } else {
+        if (colour_type === 'Behaviours') {
+            original_edges = edge_data.map((edge, i) => {
+                return {
+                    'data': {
+                        'source': edge[0],
+                        'target': edge[1],
+                        'weight': edge[3],
+                        'original_weight': edge[4],
+                        'behaviour': edge[2]
+                    },
+                    'classes': "edge" + edge[2]
+                }
+            });
+        } else {
+            if (colour_source === "Source") {
+                original_edges = edge_data.map((edge, i) => {
+                    return {
+                        'data': {
+                            'source': edge[0],
+                            'target': edge[1],
+                            'weight': edge[3],
+                            'original_weight': edge[4],
+                            'behaviour': edge[2]
+                        },
+                        'classes': "edge" + edge[0]
+                    }
+                });
+            } else {
+                original_edges = edge_data.map((edge, i) => {
+                    return {
+                        'data': {
+                            'source': edge[0],
+                            'target': edge[1],
+                            'weight': edge[3],
+                            'original_weight': edge[4],
+                            'behaviour': edge[2]
+                        },
+                        'classes': "edge" + edge[1]
+                    }
+                });
+            }
+        }
+    }
+    // Change the class of each edge depending on the sign of the weight (add word positive or negative)
+    original_edges = original_edges.map((edge) => {
+        edge['classes'] += edge_signs.get(JSON.stringify([edge['data']['source'], edge['data']['target'], edge['data']['behaviour']]));
+        return edge;
+    });
+    return original_edges;
+}
 
 async function read_files(database) {
     const events_file = "https://raw.githubusercontent.com/LuisMontanaG/BiTComparisonGraphs/refs/heads/main/" + database + "/Events.csv"
