@@ -2,9 +2,11 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
     clientside: {
         get_teams_for_group: async function (database, variable) {
             try {
-                files = await read_files(database);
-                console.log(files[1]);
-                return files[2].length
+                if (variable === 'Teams') {
+                    const files = await read_files(database);
+                    const teams = files[2];
+                    return teams.map(name => ({'label': name, 'value': name}));
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
             }

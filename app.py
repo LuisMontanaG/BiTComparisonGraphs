@@ -363,7 +363,7 @@ app.clientside_callback(
         namespace='clientside',
         function_name='get_teams_for_group'
     ),
-    Output('tooltip', 'children', allow_duplicate=True),
+    Output('dropdown-update-team', 'options'),
     [Input('dropdown-update-database', 'value')],
     State('group_by', 'data'),
     prevent_initial_call=True
