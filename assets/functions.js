@@ -472,8 +472,8 @@ async function create_comparison_graph(group_by, database_1, team_1, meeting_1, 
     var team_2_list = [];
 
     if (group_by !== 'Teams') {
-        team_1_list = read_teams_from_file(database_1, group_by, team_1);
-        team_2_list = read_teams_from_file(database_2, group_by, team_2);
+        team_1_list = await read_teams_from_file(database_1, group_by, team_1);
+        team_2_list = await read_teams_from_file(database_2, group_by, team_2);
     }
 
     if (node_type === 'Behaviours') {
@@ -540,6 +540,9 @@ function get_behaviour_node_data(events, team_list, team, meeting, normalise) {
         }
     }
     else {
+        // Convert the following python code to javascript
+        // events = events[events['sequenceId'].str.split('_').str[1].isin(team_list)]
+        console.log(team_list);
         events.data = events.data.filter(event => team_list.includes(event.sequenceId.split('_')[1]));
     }
 
