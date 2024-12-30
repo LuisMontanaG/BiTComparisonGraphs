@@ -542,7 +542,6 @@ function get_behaviour_node_data(events, team_list, team, meeting, normalise) {
     else {
         // Convert the following python code to javascript
         // events = events[events['sequenceId'].str.split('_').str[1].isin(team_list)]
-        console.log(team_list);
         events.data = events.data.filter(event => team_list.includes(event.sequenceId.split('_')[1]));
     }
 
@@ -814,9 +813,18 @@ function get_node_data_diff(node_data_list, node_type) {
     }
 
     // Get an array of 1 and -1 to depending on the size value
-    let signs = sizes.map(value => value > 0 ? 1 : -1);
-    // Change -1 for "negative" and 1 for "positive" in signs
-    signs = signs.map(sign => sign === 1 ? "positive" : "negative");
+    let signs = sizes.map(value => value / Math.abs(value));
+
+    // Change -1 for "negative" and 1 for "positive" and 0 for "" in signs
+    for (let i = 0; i < signs.length; i++) {
+        if (signs[i] === -1) {
+            signs[i] = "negative";
+        } else if (signs[i] === 1) {
+            signs[i] = "positive";
+        } else {
+            signs[i] = "";
+        }
+    }
 
     // Change the sign of the sizes to positive
     sizes = sizes.map(value => Math.abs(value));
@@ -881,10 +889,6 @@ function get_edge_data_diff(edge_data_list, edge_type, normalise) {
     // Calculate the difference in weight between the two datasets
     for (let [key, value] of Object.entries(edge_data_diff)) {
         edge_data_diff[key] = [edge_data[1][key][0] - edge_data[0][key][0], edge_data[1][key][1] - edge_data[0][key][1]];
-    }
-
-    for (let [key, value] of Object.entries(edge_data_diff)) {
-        console.log(key, value);
     }
 
     // Remove edges with weight equal to 0
