@@ -54,7 +54,7 @@ def load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2,
         edges = get_behaviour_edges_comparison(edge_data, colour_source, edge_signs)
     else:
         edges = get_participant_edges_comparison(edge_data, colour_type, colour_source, edge_signs)
-    return teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours_1
+    return teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours_1, node_size_map
 
 def read_files(dataset_name):
     events = pd.read_csv(dataset_name + '/' + events_file)
@@ -253,7 +253,6 @@ def get_behaviour_edge_data(edge_type, team_list, events, team, meeting, normali
     return edge_data
 
 def get_participant_edge_data(edge_type, events, team, meeting, entity_list, normalise):
-
     # Get events rows where sequenceId contains team
     events = events[events['sequenceId'].str.split('_').str[1] == team]
     # Remove rows with entityId -1
@@ -288,8 +287,7 @@ def get_participant_edge_data(edge_type, events, team, meeting, entity_list, nor
             source = key[0]
             edges[key] = (value / source_sum[source] * 100)
 
-    # Divide weights by max_weight
-    #weights = [weight / max_weight for weight in weights]
+
     # Convert dictionary to a list of 5-tuples
     if edge_type == 'Frequency':
         if not normalise:
@@ -793,14 +791,15 @@ def check_valid_options(node_type, colour_type, team):
             return False
         return True
 
-def get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours):
+def get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours, node_size_map):
     if colour_type == 'Behaviours':
         node_names = behaviours
     # Create a list of random longitudes and latitudes with the size of the number of acronyms
     longitudes = np.random.uniform(10, 700, len(node_names))
     latitudes = np.random.uniform(0, 0, len(node_names))
+    size = node_size_map.split(',')[1]
     # Create an array of size len(node_names) with the value 20
-    sizes = [20] * len(node_names)
+    sizes = [size] * len(node_names)
     node_data = list(zip(node_names,longitudes, latitudes, sizes, selector_node_classes))
     nodes = [
         {

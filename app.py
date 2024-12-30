@@ -19,8 +19,8 @@ colour_source = 'Source'
 show_edges = 'All'
 normalise = True
 
-teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours = load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
-legend_nodes = get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours)
+teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_size_map = load_dataset_comparison(group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
+legend_nodes = get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours, node_size_map)
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
@@ -271,6 +271,9 @@ team_2_dcc = dcc.Store(id='team_2', data='All')
 meeting_1_dcc = dcc.Store(id='meeting_1', data='1')
 meeting_2_dcc = dcc.Store(id='meeting_2', data='2')
 
+legend_stylesheet_dcc = dcc.Store(id='legend_stylesheet', data=legend_stylesheet)
+default_stylesheet_dcc = dcc.Store(id='default_stylesheet', data=default_stylesheet)
+
 node_data_dcc = dcc.Store(id='node_data', data=node_data)
 node_signs_dcc = dcc.Store(id='node_signs', data=node_signs)
 edge_data_dcc = dcc.Store(id='edge_data', data=edge_data)
@@ -280,7 +283,7 @@ edge_signs_dcc = dcc.Store(id='edge_signs', data=edge_signs_list)
 
 graph_tab = html.Div([layout_dropdown, group_dropdown, database_1_dropdown, team_1_dropdown, meeting_1_dropdown, database_2_dropdown, team_2_dropdown, meeting_2_dropdown, options_div, graph, weight_slider, tooltip,
                         node_type_dcc, edge_type_dcc, colour_type_dcc, colour_source_dcc, show_edges_dcc, normalise_dcc,
-                        min_weight_dcc, max_weight_dcc,
+                        min_weight_dcc, max_weight_dcc, legend_stylesheet_dcc, default_stylesheet_dcc,
                         group_by_dcc, database_1_dcc, database_2_dcc, team_1_dcc, team_2_dcc, meeting_1_dcc, meeting_2_dcc,
                         node_data_dcc, node_signs_dcc, edge_data_dcc, edge_signs_dcc])
 
@@ -309,7 +312,7 @@ app.clientside_callback(
                 return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4);
             }
             else {
-                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 2)) + "%)";
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ": " + parseFloat(hover_edge_data['weight']).toFixed(3) + " (" + parseFloat(hover_edge_data['weight']).toFixed(2) + "%)";
             }
         }
         else {
@@ -317,7 +320,7 @@ app.clientside_callback(
                 return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(4);
             }
             else {
-                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(3) + " (" + str(round(hover_edge_data['weight'], 3)) + "%)";
+                return hover_edge_data['source'] + " -> " + hover_edge_data['target'] + ", " + hover_edge_data['behaviour'] + ": " + parseFloat(hover_edge_data['original_weight']).toFixed(3) + " (" + parseFloat(hover_edge_data['weight']).toFixed(3) + "%)";
             }
         }
     }
@@ -575,6 +578,40 @@ app.clientside_callback(
 )
 
 # Update button
+app.clientside_callback(
+    ClientsideFunction(
+        namespace='clientside',
+        function_name='update_graph'
+    ),
+    Output('BiT', 'elements', allow_duplicate=True),
+    Output('BiT', 'stylesheet', allow_duplicate=True),
+    Output('weight-slider', 'min'),
+    Output('weight-slider', 'max'),
+    Output('weight-slider', 'marks'),
+    Output('weight-slider', 'value'),
+    Output('BiT2', 'elements'),
+    Output('BiT2', 'stylesheet'),
+    Output('node_data', 'data'),
+    Output('edge_data', 'data'),
+    Output('node_signs', 'data'),
+    Output('edge_signs', 'data'),
+    Input('update-button', 'n_clicks'),
+    State('group_by', 'data'),
+    State('database_1', 'data'),
+    State('team_1', 'data'),
+    State('meeting_1', 'data'),
+    State('database_2', 'data'),
+    State('team_2', 'data'),
+    State('meeting_2', 'data'),
+    State('node_type', 'data'),
+    State('edge_type', 'data'),
+    State('colour_type', 'data'),
+    State('colour_source', 'data'),
+    State('normalise', 'data'),
+    State('legend_stylesheet', 'data'),
+    State('default_stylesheet', 'data'),
+    prevent_initial_call=True
+)
 # @callback([Output('BiT', 'elements', allow_duplicate=True),
 #              Output('BiT', 'stylesheet'),
 #              Output('weight-slider', 'min'),
@@ -589,7 +626,7 @@ app.clientside_callback(
 #     global teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
 #     valid = check_valid_options(node_type, colour_type, team_1)
 #     if valid:
-#         teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats = load_dataset_comparison(
+#         node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours = load_dataset_comparison(
 #         group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
 #         return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
 #     else:
