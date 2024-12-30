@@ -612,25 +612,6 @@ app.clientside_callback(
     State('default_stylesheet', 'data'),
     prevent_initial_call=True
 )
-# @callback([Output('BiT', 'elements', allow_duplicate=True),
-#              Output('BiT', 'stylesheet'),
-#              Output('weight-slider', 'min'),
-#              Output('weight-slider', 'max'),
-#              Output('weight-slider', 'marks'),
-#              Output('weight-slider', 'value'),
-#            Output('BiT2', 'elements', allow_duplicate=True),
-#            Output('BiT2', 'stylesheet'),],
-#             Input('update-button', 'n_clicks'),
-#             prevent_initial_call=True)
-# def update_graph_with_button(n_clicks):
-#     global teams_1, meetings_1, teams_2, meetings_2, node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours, node_stats, edge_stats
-#     valid = check_valid_options(node_type, colour_type, team_1)
-#     if valid:
-#         node_data, edge_data, nodes, edges, selector_node_classes, selector_edge_classes, min_weight, max_weight, weight_bins, node_signs, edge_signs, node_names, behaviours = load_dataset_comparison(
-#         group_by, database_1, team_1, meeting_1, database_2, team_2, meeting_2, node_type, edge_type, colour_type, colour_source, normalise)
-#         return edges + nodes, selector_node_classes + selector_edge_classes + default_stylesheet, min_weight, max_weight + 1, weight_bins, [min_weight, max_weight], get_legend_nodes(node_names, selector_node_classes, colour_type, behaviours), selector_node_classes + legend_stylesheet
-#     else:
-#         raise PreventUpdate
 
 if __name__ == '__main__':
     app.run_server(debug=False)
