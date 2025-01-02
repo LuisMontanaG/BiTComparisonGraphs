@@ -359,7 +359,7 @@ async function read_team_groups_from_file(database, variable) {
     const file = "https://raw.githubusercontent.com/LuisMontanaG/BiTComparisonGraphs/refs/heads/main/" + database + "/Variables.csv"
     const data = await fetch(file)
     const variables_data = await data.text()
-
+    console.log(variables_data)
     const lines = variables_data.split('\n')
     lines.pop();
     var is_variable = false;
